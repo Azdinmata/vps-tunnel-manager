@@ -417,6 +417,35 @@ async function restartAllServices() {
   ['ssh', 'stunnel', 'wsProxy', 'udpCustom', 'badvpn', 'v2ray'].forEach(s => restartService(s));
 }
 
+async function updateSystem() {
+  if (!confirm('Are you sure you want to update the VPS Tunnel Manager to the latest version from GitHub?')) return;
+  try {
+    const res = await fetch('/api/service/update', { method: 'POST' });
+    const data = await res.json();
+    alert(data.message || 'System update initiated! Dashboard reloading...');
+    setTimeout(() => location.reload(), 3000);
+  } catch (e) {
+    alert('Update triggered. Reloading page...');
+    setTimeout(() => location.reload(), 3000);
+  }
+}
+
+async function uninstallSystem() {
+  const code = prompt('WARNING: This will completely DELETE all services, user accounts, and purge the system!\nType "PURGE" to confirm:');
+  if (code !== 'PURGE') {
+    alert('Uninstallation cancelled.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/service/uninstall', { method: 'POST' });
+    const data = await res.json();
+    alert('System uninstalled and purged successfully!');
+    location.reload();
+  } catch (e) {
+    alert('Uninstall command executed.');
+  }
+}
+
 function rebootServer() {
   if (confirm('Are you sure you want to REBOOT the entire Linux VPS server?')) {
     fetch('/api/service/action', {
