@@ -71,10 +71,10 @@ io.on('connection', (socket) => {
 
 // Start Server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`🚀 Ultra VPS SSH & Multi-Protocol Tunnel Manager`);
-  console.log(`🌐 Server running on http://localhost:${PORT}`);
+  console.log(`🌐 Server running on http://0.0.0.0:${PORT}`);
   console.log(`💻 Architecture Detected: ${getArchitecture()}`);
   console.log(`=======================================================`);
 });
