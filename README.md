@@ -56,7 +56,7 @@ my script/
 ### 1. Run Web Dashboard Locally or on Node VPS
 ```bash
 # Install dependencies
-npm install
+sudo apt install npm
 
 # Start server
 npm start
