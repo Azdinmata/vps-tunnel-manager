@@ -199,7 +199,7 @@ bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release
 # Install Web Manager Dashboard & CLI Manager script
 echo -e "\n${YELLOW}[8/8] Deploying Web Manager Dashboard & CLI Terminal Command ('manager')...${NC}"
 mkdir -p /usr/local/vps-manager
-curl -sSL -o /usr/local/bin/manager https://raw.githubusercontent.com/azzeddin/vps-tunnel-manager/main/manager.sh 2>/dev/null || true
+curl -sSL -o /usr/local/bin/manager https://raw.githubusercontent.com/Azdinmata/vps-tunnel-manager/main/scripts/manager.sh 2>/dev/null || true
 chmod +x /usr/local/bin/manager
 
 # Create Auto-Cleaner Cron for Expired Users (Excludes Lifetime accounts with 'never' or 0)
