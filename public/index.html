@@ -148,6 +148,7 @@
           </div>
 
           <div class="services-grid" id="services-container">
+            
             <!-- 1. OpenSSH Card -->
             <div class="service-card">
               <div class="service-card-header">
@@ -161,9 +162,11 @@
                 <span class="status-pill online" id="status-ssh"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Standard OpenSSH daemon for direct shell & proxy connections.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('ssh', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssh')"><i class="fa-solid fa-sliders"></i> Edit Port & Banner</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('ssh', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('ssh', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('ssh', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssh')"><i class="fa-solid fa-sliders"></i> Edit Port & Config</button>
               </div>
             </div>
 
@@ -180,8 +183,10 @@
                 <span class="status-pill online" id="status-dropbear"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Lightweight secondary SSH server for HTTP proxy injectors.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('dropbear', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('dropbear', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('dropbear', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('dropbear', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('dropbear')"><i class="fa-solid fa-sliders"></i> Edit Ports</button>
               </div>
             </div>
@@ -199,9 +204,11 @@
                 <span class="status-pill online" id="status-stunnel"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">SSL/TLS wrapper for SNI spoofing and DPI bypass filters.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('stunnel', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssl')"><i class="fa-solid fa-sliders"></i> Edit SSL Ports & Cert</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('stunnel', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('stunnel', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('stunnel', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssl')"><i class="fa-solid fa-sliders"></i> Edit SSL & Domain</button>
               </div>
             </div>
 
@@ -218,8 +225,10 @@
                 <span class="status-pill online" id="status-wsProxy"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">HTTP/HTTPS WS proxy with 101 Switching Protocols payload editor.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('wsProxy', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('wsProxy', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('wsProxy', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('wsProxy', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ws')"><i class="fa-solid fa-code"></i> Edit WS Payload</button>
               </div>
             </div>
@@ -237,8 +246,10 @@
                 <span class="status-pill online" id="status-udpCustom"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">High-performance UDP tunnel for mobile connection stabilization & gaming.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('udpCustom', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('udpCustom', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('udpCustom', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('udpCustom', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('udpCustom')"><i class="fa-solid fa-sliders"></i> Tweak Buffer & Port</button>
               </div>
             </div>
@@ -256,8 +267,10 @@
                 <span class="status-pill online" id="status-badvpn"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">UDP gateway daemon for online voice calls and UDP gaming traffic.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('badvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('badvpn', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('badvpn', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('badvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('badvpn')"><i class="fa-solid fa-sliders"></i> Edit UDPGW Ports</button>
               </div>
             </div>
@@ -275,8 +288,10 @@
                 <span class="status-pill online" id="status-slowdns"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">DNS tunneling daemon forwarding SSH packets over NS subdomains.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('slowdns', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('slowdns', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('slowdns', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('slowdns', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('slowdns')"><i class="fa-solid fa-key"></i> Edit NS Domain & Keys</button>
               </div>
             </div>
@@ -294,8 +309,10 @@
                 <span class="status-pill online" id="status-vmess"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">VMess WebSocket transport with Cloudflare CDN integration.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('v2ray', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('v2ray', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VMess Port</button>
               </div>
             </div>
@@ -313,8 +330,10 @@
                 <span class="status-pill online" id="status-vless"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Zero-overhead VLess flow control with XTLS Vision flow.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('v2ray', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('v2ray', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VLess Port</button>
               </div>
             </div>
@@ -332,8 +351,10 @@
                 <span class="status-pill online" id="status-trojan"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Trojan HTTPS camouflage protocol over gRPC transport.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('v2ray', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('v2ray', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit Trojan Port</button>
               </div>
             </div>
@@ -351,8 +372,10 @@
                 <span class="status-pill online" id="status-openvpn"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Enterprise OpenVPN daemon with PAM universal account authentication.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('openvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('openvpn', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('openvpn', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('openvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('openvpn')"><i class="fa-solid fa-sliders"></i> Edit Port & Cipher</button>
               </div>
             </div>
@@ -370,8 +393,10 @@
                 <span class="status-pill online" id="status-nginx"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">Reverse proxy routing web requests and SSL certificates.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="toggleService('nginx', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+              <div class="service-actions-grid">
+                <button class="btn btn-xs btn-outline color-emerald" onclick="toggleService('nginx', 'start')"><i class="fa-solid fa-play"></i> Start</button>
+                <button class="btn btn-xs btn-outline color-rose" onclick="toggleService('nginx', 'stop')"><i class="fa-solid fa-stop"></i> Stop</button>
+                <button class="btn btn-xs btn-outline color-amber" onclick="toggleService('nginx', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('nginx')"><i class="fa-solid fa-sliders"></i> Edit Nginx Proxy</button>
               </div>
             </div>
@@ -407,7 +432,7 @@
                 <span class="status-pill online" id="status-torrent"><i class="fa-solid fa-shield"></i> Enabled</span>
               </div>
               <p class="service-desc">Blocks BitTorrent packets, DHT networks, and peer-to-peer torrenting to prevent VPS suspensions.</p>
-              <div class="service-actions">
+              <div class="service-actions-grid">
                 <button class="btn btn-xs btn-glass style-btn-rose" onclick="toggleTorrentBlocker(true)"><i class="fa-solid fa-ban"></i> Enable Block</button>
                 <button class="btn btn-xs btn-outline" onclick="toggleTorrentBlocker(false)"><i class="fa-solid fa-unlock"></i> Disable Block</button>
               </div>
@@ -720,7 +745,7 @@ Content-Type: text/html; charset=UTF-8
     </div>
   </div>
 
-  <!-- MODAL 1: CREATE UNIVERSAL USER MODAL -->
+  <!-- MODALS -->
   <div id="modal-create-user" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -752,7 +777,6 @@ Content-Type: text/html; charset=UTF-8
     </div>
   </div>
 
-  <!-- MODAL 2: CERTBOT SSL ISSUER MODAL -->
   <div id="modal-certbot" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -776,7 +800,6 @@ Content-Type: text/html; charset=UTF-8
     </div>
   </div>
 
-  <!-- MODAL 3: INTERACTIVE PROTOCOL PORT & SETTINGS EDIT MODAL -->
   <div id="modal-protocol-edit" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -805,7 +828,6 @@ Content-Type: text/html; charset=UTF-8
     </div>
   </div>
 
-  <!-- MODAL 4: V2RAY CONFIG DISPLAY / QR CODE MODAL -->
   <div id="modal-v2ray-config" class="modal">
     <div class="modal-content modal-lg">
       <div class="modal-header">

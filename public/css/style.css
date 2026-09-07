@@ -79,7 +79,26 @@ body {
   white-space: nowrap;
 }
 
+.proto-tag.offline {
+  background: rgba(244, 63, 94, 0.12);
+  color: var(--rose);
+  border-color: rgba(244, 63, 94, 0.25);
+}
+
 .proto-tag b {
   color: #fff;
   font-family: var(--font-code);
+}
+
+/* Service Actions 4-Button Grid */
+.service-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.service-actions-grid .btn-gradient {
+  grid-column: span 3;
+  margin-top: 0.2rem;
 }
