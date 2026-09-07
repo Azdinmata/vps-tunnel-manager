@@ -161,14 +161,29 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-cat << EOF > /etc/systemd/system/vps-ws-proxy-8080.service
+cat << EOF > /etc/systemd/system/vps-ws-proxy-8880.service
 [Unit]
-Description=VPS WebSocket HTTP Proxy Port 8080
+Description=VPS WebSocket HTTP Proxy Port 8880
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /usr/local/bin/vps-ws-proxy 8080
+ExecStart=/usr/bin/python3 /usr/local/bin/vps-ws-proxy 8880
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat << EOF > /etc/systemd/system/vps-ws-proxy-2082.service
+[Unit]
+Description=VPS WebSocket HTTP Proxy Port 2082
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/vps-ws-proxy 2082
 Restart=always
 RestartSec=3
 
@@ -179,8 +194,16 @@ EOF
 systemctl daemon-reload 2>/dev/null || true
 systemctl enable --now vps-ws-proxy-80 2>/dev/null || true
 systemctl enable --now vps-ws-proxy-8080 2>/dev/null || true
+systemctl enable --now vps-ws-proxy-8880 2>/dev/null || true
+systemctl enable --now vps-ws-proxy-2082 2>/dev/null || true
 systemctl restart vps-ws-proxy-80 2>/dev/null || true
 systemctl restart vps-ws-proxy-8080 2>/dev/null || true
+systemctl restart vps-ws-proxy-8880 2>/dev/null || true
+systemctl restart vps-ws-proxy-2082 2>/dev/null || true
+
+# Deploy SlowDNS iptables port redirect (UDP 53 -> 5300)
+echo -e "\n${YELLOW}[3.55/8] Configuring SlowDNS IPTables Redirect (UDP 53 -> 5300)...${NC}"
+iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300 2>/dev/null || true
 
 # Deploy BadVPN udpgw Daemon (Port 7300 for UDP Forwarding in SSH Tunnels)
 echo -e "\n${YELLOW}[3.6/8] Deploying BadVPN udpgw Daemon (UDP Port 7300)...${NC}"
