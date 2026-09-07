@@ -35,14 +35,13 @@ esac
 
 echo -e "${GREEN}[INFO] Detected Processor Architecture: $ARCH_TYPE${NC}"
 
-# Install Core Tools & Node.js LTS
-echo -e "\n${YELLOW}[1/8] Installing Core Packages, Node.js & NPM...${NC}"
-apt-get update -y && apt-get install -y curl wget unzip tar net-tools iptables ufw sudo git socat python3 python3-pip cron openssl jq stunnel4 nginx dropbear fail2ban
+# Install Core Tools, Node.js 20 LTS & NPM automatically
+echo -e "\n${YELLOW}[1/8] Installing Core Packages, Node.js v20 LTS & NPM...${NC}"
+apt-get update -y
+apt-get install -y curl wget unzip tar net-tools iptables ufw sudo git socat python3 python3-pip cron openssl jq stunnel4 nginx dropbear fail2ban
 
-if ! command -v node &> /dev/null; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-  apt-get install -y nodejs
-fi
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs build-essential
 
 # Enable TCP BBR Speed Optimizer
 echo -e "\n${YELLOW}[2/8] Enabling TCP BBR Speed Optimizer...${NC}"
@@ -61,14 +60,33 @@ EOF
 sed -i 's/#Banner none/Banner \/etc\/issue.net/g' /etc/ssh/sshd_config
 systemctl restart sshd || systemctl restart ssh
 
-# Deploy Web Dashboard Project to /usr/local/vps-manager
-echo -e "\n${YELLOW}[4/8] Deploying Web Dashboard & Installing Dependencies...${NC}"
+# Stunnel4 Setup
+echo -e "\n${YELLOW}[4/8] Configuring SSL Stunnel4...${NC}"
+openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
+  -subj "/C=US/ST=State/L=City/O=UltraVPS/CN=vpn.server" \
+  -keyout /etc/stunnel/stunnel.pem -out /etc/stunnel/stunnel.pem 2>/dev/null
+
+cat << 'EOF' > /etc/stunnel/stunnel.conf
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = a:SO_REUSEADDR=1
+
+[ssh-ssl]
+accept = 443
+connect = 127.0.0.1:22
+EOF
+
+sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+systemctl restart stunnel4
+
+# Deploy Web Dashboard Project to /usr/local/vps-manager & Run npm install automatically
+echo -e "\n${YELLOW}[5/8] Deploying Web Dashboard & Automatically Installing Dependencies...${NC}"
 rm -rf /usr/local/vps-manager
 git clone https://github.com/Azdinmata/vps-tunnel-manager.git /usr/local/vps-manager
 cd /usr/local/vps-manager
 npm install --production
 
-# Create Systemd Background Service for Web Dashboard (Runs 24/7 on Port 3000)
+# Create Systemd Background Daemon (Runs Web Dashboard 24/7 on Port 3000 automatically)
 cat << 'EOF' > /etc/systemd/system/vps-web-dashboard.service
 [Unit]
 Description=Ultra VPS Tunnel Manager Web Dashboard
