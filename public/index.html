@@ -32,7 +32,6 @@
 
       <!-- Live Telemetry Meters -->
       <div class="telemetry-bar">
-        <!-- CPU Metric -->
         <div class="metric-card">
           <div class="metric-header">
             <span><i class="fa-solid fa-microchip color-cyan"></i> CPU Load</span>
@@ -44,7 +43,6 @@
           <small id="cpu-model">Detecting CPU...</small>
         </div>
 
-        <!-- RAM Metric -->
         <div class="metric-card">
           <div class="metric-header">
             <span><i class="fa-solid fa-memory color-purple"></i> RAM Usage</span>
@@ -56,7 +54,6 @@
           <small><span id="ram-used">0</span> / <span id="ram-total">0</span> GB</small>
         </div>
 
-        <!-- Network Bandwidth Metric -->
         <div class="metric-card">
           <div class="metric-header">
             <span><i class="fa-solid fa-network-wired color-emerald"></i> Bandwidth Rate</span>
@@ -68,7 +65,6 @@
           <small>Total Tx/Rx: <span id="net-total">241 GB</span></small>
         </div>
 
-        <!-- Active Connections & Disk Metric -->
         <div class="metric-card">
           <div class="metric-header">
             <span><i class="fa-solid fa-users color-rose"></i> Active Tunnels</span>
@@ -81,7 +77,6 @@
         </div>
       </div>
 
-      <!-- Quick Action Buttons -->
       <div class="header-actions">
         <button class="btn btn-sm btn-glass" onclick="updateSystem()"><i class="fa-solid fa-rotate-right color-cyan"></i> Update System</button>
         <button class="btn btn-sm btn-glass" onclick="clearCache()"><i class="fa-solid fa-broom color-amber"></i> Clear Cache</button>
@@ -92,27 +87,27 @@
 
     <!-- LIVE PROTOCOLS STATUS BAR HEADER -->
     <div class="protocols-status-bar">
-      <span class="bar-title"><i class="fa-solid fa-network-wired color-cyan"></i> ALL PROTOCOLS STATUS & PORTS:</span>
-      <div class="protocol-tags-container">
-        <span class="proto-tag online">SSH <b>:22</b></span>
-        <span class="proto-tag online">Dropbear <b>:109</b></span>
-        <span class="proto-tag online">SSL <b>:443</b></span>
-        <span class="proto-tag online">WS Proxy <b>:80,8880</b></span>
-        <span class="proto-tag online">UDP Custom <b>:7300</b></span>
-        <span class="proto-tag online">BadVPN <b>:7100-7300</b></span>
-        <span class="proto-tag online">SlowDNS <b>:53</b></span>
-        <span class="proto-tag online">VMess <b>:10085</b></span>
-        <span class="proto-tag online">VLess <b>:20085</b></span>
-        <span class="proto-tag online">Trojan <b>:30085</b></span>
-        <span class="proto-tag online">Shadowsocks <b>:40085</b></span>
-        <span class="proto-tag online">OpenVPN <b>:1194</b></span>
+      <span class="bar-title"><i class="fa-solid fa-network-wired color-cyan"></i> DYNAMIC PROTOCOLS STATUS & PORTS:</span>
+      <div class="protocol-tags-container" id="proto-status-tags">
+        <span class="proto-tag online" id="tag-ssh">SSH <b>:22</b></span>
+        <span class="proto-tag online" id="tag-dropbear">Dropbear <b>:109</b></span>
+        <span class="proto-tag online" id="tag-ssl">SSL <b>:443</b></span>
+        <span class="proto-tag online" id="tag-ws">WS Proxy <b>:80</b></span>
+        <span class="proto-tag online" id="tag-udp">UDP Custom <b>:7300</b></span>
+        <span class="proto-tag online" id="tag-badvpn">BadVPN <b>:7300</b></span>
+        <span class="proto-tag online" id="tag-slowdns">SlowDNS <b>:53</b></span>
+        <span class="proto-tag online" id="tag-vmess">VMess <b>:10085</b></span>
+        <span class="proto-tag online" id="tag-vless">VLess <b>:20085</b></span>
+        <span class="proto-tag online" id="tag-trojan">Trojan <b>:30085</b></span>
+        <span class="proto-tag online" id="tag-openvpn">OpenVPN <b>:1194</b></span>
+        <span class="proto-tag online" id="tag-nginx">Nginx <b>:80/443</b></span>
+        <span class="proto-tag online" id="tag-torrent"><i class="fa-solid fa-ban color-rose"></i> Torrent Blocked</span>
       </div>
     </div>
 
     <!-- MAIN BODY NAVIGATION & CONTENT -->
     <div class="main-layout">
       
-      <!-- CATEGORY NAVIGATION SIDEBAR -->
       <nav class="sidebar-nav">
         <div class="nav-section-title">MANAGEMENT CATEGORIES</div>
         <button class="nav-item active" onclick="switchTab('dashboard')">
@@ -134,6 +129,9 @@
         <button class="nav-item" onclick="switchTab('openvpn-dns')">
           <i class="fa-solid fa-lock"></i> <span>OpenVPN & SlowDNS</span>
         </button>
+        <button class="nav-item" onclick="switchTab('security')">
+          <i class="fa-solid fa-ban color-rose"></i> <span>Security & Torrent Block</span>
+        </button>
         <button class="nav-item" onclick="switchTab('installer')">
           <i class="fa-solid fa-code"></i> <span>VPS Installer Script</span>
         </button>
@@ -145,11 +143,10 @@
         <!-- TAB 1: DASHBOARD & ALL PROTOCOLS CONTROL -->
         <section id="tab-dashboard" class="tab-page active">
           <div class="section-header">
-            <h2><i class="fa-solid fa-gauge-high color-cyan"></i> All Protocol Services & Interactive Control Panel</h2>
+            <h2><i class="fa-solid fa-gauge-high color-cyan"></i> Detailed Protocol Control & Port Manager</h2>
             <button class="btn btn-secondary btn-sm" onclick="restartAllServices()"><i class="fa-solid fa-rotate"></i> Restart All Services</button>
           </div>
 
-          <!-- Services Grid Tiles (Complete Full Protocols) -->
           <div class="services-grid" id="services-container">
             <!-- 1. OpenSSH Card -->
             <div class="service-card">
@@ -161,12 +158,12 @@
                     <span class="service-port">Port: <b id="port-ssh-disp">22</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-ssh"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">Standard secure shell direct tunneling daemon.</p>
+              <p class="service-desc">Standard OpenSSH daemon for direct shell & proxy connections.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('ssh')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssh')"><i class="fa-solid fa-sliders"></i> Edit Port & Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('ssh', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssh')"><i class="fa-solid fa-sliders"></i> Edit Port & Banner</button>
               </div>
             </div>
 
@@ -180,12 +177,12 @@
                     <span class="service-port">Ports: <b id="port-dropbear-disp">109, 143</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-dropbear"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">Lightweight SSH server for proxy forwarders.</p>
+              <p class="service-desc">Lightweight secondary SSH server for HTTP proxy injectors.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('dropbear')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('dropbear')"><i class="fa-solid fa-sliders"></i> Edit Port & Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('dropbear', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('dropbear')"><i class="fa-solid fa-sliders"></i> Edit Ports</button>
               </div>
             </div>
 
@@ -199,12 +196,12 @@
                     <span class="service-port">Ports: <b id="port-ssl-disp">443, 444</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-stunnel"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">SSL/TLS wrapper for SNI spoofing and DPI bypass.</p>
+              <p class="service-desc">SSL/TLS wrapper for SNI spoofing and DPI bypass filters.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('stunnel')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssl')"><i class="fa-solid fa-sliders"></i> Edit Port & Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('stunnel', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ssl')"><i class="fa-solid fa-sliders"></i> Edit SSL Ports & Cert</button>
               </div>
             </div>
 
@@ -215,15 +212,15 @@
                   <i class="fa-solid fa-globe color-emerald"></i>
                   <div>
                     <h3>SSH WebSocket Proxy</h3>
-                    <span class="service-port">Ports: <b id="port-ws-disp">80, 8880, 2082</b></span>
+                    <span class="service-port">Ports: <b id="port-ws-disp">80, 8880</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-wsProxy"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">HTTP/HTTPS WS proxy with 101 Switching Protocols header payload customization.</p>
+              <p class="service-desc">HTTP/HTTPS WS proxy with 101 Switching Protocols payload editor.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('wsProxy')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ws')"><i class="fa-solid fa-sliders"></i> Edit Payload & Ports</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('wsProxy', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('ws')"><i class="fa-solid fa-code"></i> Edit WS Payload</button>
               </div>
             </div>
 
@@ -237,12 +234,12 @@
                     <span class="service-port">Port: <b id="port-udpcustom-disp">7300 / 53</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-udpCustom"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">High-speed UDP tunnel for zero-latency mobile gaming.</p>
+              <p class="service-desc">High-performance UDP tunnel for mobile connection stabilization & gaming.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('udpCustom')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('udpCustom')"><i class="fa-solid fa-sliders"></i> Edit Port & Buffer</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('udpCustom', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('udpCustom')"><i class="fa-solid fa-sliders"></i> Tweak Buffer & Port</button>
               </div>
             </div>
 
@@ -256,11 +253,11 @@
                     <span class="service-port">Ports: <b id="port-badvpn-disp">7100, 7200, 7300</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-badvpn"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">UDP gateway daemon for online voice calls & gaming over SSH.</p>
+              <p class="service-desc">UDP gateway daemon for online voice calls and UDP gaming traffic.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('badvpn')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('badvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
                 <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('badvpn')"><i class="fa-solid fa-sliders"></i> Edit UDPGW Ports</button>
               </div>
             </div>
@@ -272,15 +269,15 @@
                   <i class="fa-solid fa-dns color-cyan"></i>
                   <div>
                     <h3>SlowDNS (DNSTT)</h3>
-                    <span class="service-port">Port: <b id="port-slowdns-disp">53 (DNS)</b></span>
+                    <span class="service-port">Port: <b>53 (DNS)</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-slowdns"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
               <p class="service-desc">DNS tunneling daemon forwarding SSH packets over NS subdomains.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('slowdns')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('slowdns')"><i class="fa-solid fa-sliders"></i> Edit NS Domain & Keys</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('slowdns', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('slowdns')"><i class="fa-solid fa-key"></i> Edit NS Domain & Keys</button>
               </div>
             </div>
 
@@ -294,12 +291,12 @@
                     <span class="service-port">Port: <b id="port-vmess-disp">10085</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-vmess"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">VMess WebSocket transport with Cloudflare CDN support.</p>
+              <p class="service-desc">VMess WebSocket transport with Cloudflare CDN integration.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('v2ray')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VMess Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VMess Port</button>
               </div>
             </div>
 
@@ -313,16 +310,16 @@
                     <span class="service-port">Port: <b id="port-vless-disp">20085</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-vless"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">Lightweight VLess flow protocol with XTLS Vision encryption.</p>
+              <p class="service-desc">Zero-overhead VLess flow control with XTLS Vision flow.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('v2ray')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VLess Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit VLess Port</button>
               </div>
             </div>
 
-            <!-- 10. V2Ray Trojan Card -->
+            <!-- 10. Trojan gRPC Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -332,50 +329,87 @@
                     <span class="service-port">Port: <b id="port-trojan-disp">30085</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-trojan"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">Trojan protocol using gRPC high-concurrency transport.</p>
+              <p class="service-desc">Trojan HTTPS camouflage protocol over gRPC transport.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('v2ray')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit Trojan Settings</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('v2ray', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit Trojan Port</button>
               </div>
             </div>
 
-            <!-- 11. Shadowsocks Card -->
-            <div class="service-card">
-              <div class="service-card-header">
-                <div class="service-title">
-                  <i class="fa-solid fa-paper-plane color-emerald"></i>
-                  <div>
-                    <h3>Shadowsocks 2022</h3>
-                    <span class="service-port">Port: <b id="port-ss-disp">40085</b></span>
-                  </div>
-                </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
-              </div>
-              <p class="service-desc">Fast AEAD encrypted proxy protocol.</p>
-              <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('v2ray')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('v2ray')"><i class="fa-solid fa-sliders"></i> Edit SS Settings</button>
-              </div>
-            </div>
-
-            <!-- 12. OpenVPN Card -->
+            <!-- 11. OpenVPN Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
                   <i class="fa-solid fa-key color-purple"></i>
                   <div>
                     <h3>OpenVPN Server</h3>
-                    <span class="service-port">Port: <b id="port-openvpn-disp">1194 (TCP/UDP)</b></span>
+                    <span class="service-port">Port: <b id="port-openvpn-disp">1194</b></span>
                   </div>
                 </div>
-                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+                <span class="status-pill online" id="status-openvpn"><i class="fa-solid fa-check-circle"></i> Online</span>
               </div>
-              <p class="service-desc">Enterprise OpenVPN daemon with PAM universal auth integration.</p>
+              <p class="service-desc">Enterprise OpenVPN daemon with PAM universal account authentication.</p>
               <div class="service-actions">
-                <button class="btn btn-xs btn-outline" onclick="restartService('openvpn')"><i class="fa-solid fa-rotate"></i> Restart</button>
-                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('openvpn')"><i class="fa-solid fa-sliders"></i> Edit Port & Config</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleService('openvpn', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('openvpn')"><i class="fa-solid fa-sliders"></i> Edit Port & Cipher</button>
+              </div>
+            </div>
+
+            <!-- 12. Nginx Reverse Proxy Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-server color-emerald"></i>
+                  <div>
+                    <h3>Nginx Reverse Proxy</h3>
+                    <span class="service-port">Ports: <b>80, 443</b></span>
+                  </div>
+                </div>
+                <span class="status-pill online" id="status-nginx"><i class="fa-solid fa-check-circle"></i> Online</span>
+              </div>
+              <p class="service-desc">Reverse proxy routing web requests and SSL certificates.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="toggleService('nginx', 'restart')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-gradient" onclick="openEditProtocolModal('nginx')"><i class="fa-solid fa-sliders"></i> Edit Nginx Proxy</button>
+              </div>
+            </div>
+
+            <!-- 13. Certbot SSL Manager Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-certificate color-cyan"></i>
+                  <div>
+                    <h3>Certbot SSL Auto-Renewer</h3>
+                    <span class="service-port">Let's Encrypt TLS</span>
+                  </div>
+                </div>
+                <span class="status-pill online" id="status-certbot"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">Automated SSL certificate issuance and Let's Encrypt auto-renew daemon.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-gradient block-btn" onclick="openCertbotModal()"><i class="fa-solid fa-key"></i> Issue / Renew SSL Cert</button>
+              </div>
+            </div>
+
+            <!-- 14. Torrent & P2P Blocker Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-ban color-rose"></i>
+                  <div>
+                    <h3>BitTorrent & P2P Blocker</h3>
+                    <span class="service-port">IPtables Firewall Filter</span>
+                  </div>
+                </div>
+                <span class="status-pill online" id="status-torrent"><i class="fa-solid fa-shield"></i> Enabled</span>
+              </div>
+              <p class="service-desc">Blocks BitTorrent packets, DHT networks, and peer-to-peer torrenting to prevent VPS suspensions.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-glass style-btn-rose" onclick="toggleTorrentBlocker(true)"><i class="fa-solid fa-ban"></i> Enable Block</button>
+                <button class="btn btn-xs btn-outline" onclick="toggleTorrentBlocker(false)"><i class="fa-solid fa-unlock"></i> Disable Block</button>
               </div>
             </div>
 
@@ -425,7 +459,42 @@
           </div>
         </section>
 
-        <!-- TAB 3: SSH & WEBSOCKET SETTINGS -->
+        <!-- TAB 3: SECURITY & TORRENT BLOCKING -->
+        <section id="tab-security" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-shield-halved color-rose"></i> Security, IP Firewall & Torrent Protection</h2>
+          </div>
+
+          <div class="config-grid">
+            <div class="config-card">
+              <h3><i class="fa-solid fa-ban color-rose"></i> Anti-Torrent & P2P Filtering</h3>
+              <p>Automatically drops BitTorrent handshake headers, DHT peer discovery packets, and standard torrenting ports (6881-6889, 51413) to protect your VPS IP from DMCA copyright notices.</p>
+              <div class="form-group">
+                <label>BitTorrent Packet Filter Status</label>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                  <button class="btn btn-gradient btn-sm" onclick="toggleTorrentBlocker(true)"><i class="fa-solid fa-lock"></i> Activate IPtables Torrent Block</button>
+                  <button class="btn btn-secondary btn-sm" onclick="toggleTorrentBlocker(false)"><i class="fa-solid fa-lock-open"></i> Disable Torrent Filter</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-card">
+              <h3><i class="fa-solid fa-user-shield color-cyan"></i> Fail2Ban Brute-Force Protection</h3>
+              <p>Monitors SSH and tunnel authentication failures, automatically banning abusive client IPs.</p>
+              <div class="form-group">
+                <label>Max Auth Retries Allowed</label>
+                <input type="number" id="cfg-fail2ban-max" value="3">
+              </div>
+              <div class="form-group">
+                <label>Ban Duration (Seconds)</label>
+                <input type="number" id="cfg-fail2ban-time" value="3600">
+              </div>
+              <button class="btn btn-gradient btn-sm" onclick="saveProtocolConfigForm()"><i class="fa-solid fa-floppy-disk"></i> Save Fail2Ban Rules</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: SSH & WEBSOCKET SETTINGS -->
         <section id="tab-ssh-ws" class="tab-page">
           <div class="section-header">
             <h2><i class="fa-solid fa-terminal color-cyan"></i> SSH & WebSocket Tunnel Configuration</h2>
@@ -482,7 +551,7 @@ Content-Type: text/html; charset=UTF-8
           </div>
         </section>
 
-        <!-- TAB 4: UDP CUSTOM & BADVPN -->
+        <!-- TAB 5: UDP CUSTOM & BADVPN -->
         <section id="tab-udp-badvpn" class="tab-page">
           <div class="section-header">
             <h2><i class="fa-solid fa-bolt color-amber"></i> UDP Custom (ZiVPN) & BadVPN udpgw Setup</h2>
@@ -528,7 +597,7 @@ Content-Type: text/html; charset=UTF-8
           </div>
         </section>
 
-        <!-- TAB 5: V2RAY / XRAY SUITE -->
+        <!-- TAB 6: V2RAY / XRAY SUITE -->
         <section id="tab-v2ray" class="tab-page">
           <div class="section-header">
             <h2><i class="fa-solid fa-shield-halved color-cyan"></i> V2Ray / Xray Multi-Protocol Suite</h2>
@@ -589,7 +658,7 @@ Content-Type: text/html; charset=UTF-8
           </div>
         </section>
 
-        <!-- TAB 6: OPENVPN & SLOWDNS -->
+        <!-- TAB 7: OPENVPN & SLOWDNS -->
         <section id="tab-openvpn-dns" class="tab-page">
           <div class="section-header">
             <h2><i class="fa-solid fa-lock color-purple"></i> OpenVPN & SlowDNS Server</h2>
@@ -622,7 +691,7 @@ Content-Type: text/html; charset=UTF-8
           </div>
         </section>
 
-        <!-- TAB 7: VPS INSTALLER SCRIPT GENERATOR -->
+        <!-- TAB 8: VPS INSTALLER SCRIPT GENERATOR -->
         <section id="tab-installer" class="tab-page">
           <div class="section-header">
             <h2><i class="fa-solid fa-code color-emerald"></i> Automated Linux VPS Deployment Script</h2>
@@ -677,13 +746,37 @@ Content-Type: text/html; charset=UTF-8
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('modal-create-user')">Cancel (0)</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-create-user')">Return / Cancel (0)</button>
         <button class="btn btn-gradient" onclick="submitCreateUser()"><i class="fa-solid fa-check"></i> Create Account</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 2: INTERACTIVE PROTOCOL PORT & SETTINGS EDIT MODAL -->
+  <!-- MODAL 2: CERTBOT SSL ISSUER MODAL -->
+  <div id="modal-certbot" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-certificate color-cyan"></i> Issue Let's Encrypt SSL Certificate</h3>
+        <button class="close-btn" onclick="closeModal('modal-certbot')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Domain Name (A Record pointing to VPS IP)</label>
+          <input type="text" id="cert-domain-input" placeholder="e.g. vpn.yourdomain.com">
+        </div>
+        <div class="form-group">
+          <label>Admin Email</label>
+          <input type="email" id="cert-email-input" placeholder="admin@yourdomain.com">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-certbot')">Return / Cancel (0)</button>
+        <button class="btn btn-gradient" onclick="submitIssueCert()"><i class="fa-solid fa-key"></i> Issue Free SSL Certificate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: INTERACTIVE PROTOCOL PORT & SETTINGS EDIT MODAL -->
   <div id="modal-protocol-edit" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -712,7 +805,7 @@ Content-Type: text/html; charset=UTF-8
     </div>
   </div>
 
-  <!-- MODAL 3: V2RAY CONFIG DISPLAY / QR CODE MODAL -->
+  <!-- MODAL 4: V2RAY CONFIG DISPLAY / QR CODE MODAL -->
   <div id="modal-v2ray-config" class="modal">
     <div class="modal-content modal-lg">
       <div class="modal-header">

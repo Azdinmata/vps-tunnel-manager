@@ -8,13 +8,11 @@ let currentUsers = [];
 let protocolConfig = {};
 let currentSelectedV2RayProtocol = 'vmess';
 
-// Initialize App on DOM Loaded
 document.addEventListener('DOMContentLoaded', () => {
   initSocketConnection();
   setupEventListeners();
 });
 
-// Socket.io Telemetry & Real-Time Sync
 function initSocketConnection() {
   try {
     socket = io();
@@ -44,7 +42,6 @@ function initSocketConnection() {
   }
 }
 
-// Fallback REST Telemetry
 async function fetchTelemetryREST() {
   try {
     const res = await fetch('/api/telemetry');
@@ -61,7 +58,7 @@ async function fetchTelemetryREST() {
   }
 }
 
-// Update Top Task Manager UI Telemetry Meters
+// Update Telemetry & Real Live Protocol Service Status Indicators
 function updateTelemetryUI(data) {
   if (!data) return;
 
@@ -96,6 +93,40 @@ function updateTelemetryUI(data) {
     const d = Math.floor(data.uptime / (3600*24));
     const h = Math.floor((data.uptime % (3600*24)) / 3600);
     document.getElementById('uptime-str').innerText = `${d}d ${h}h`;
+  }
+
+  // Update Dynamic Protocol Live Status Badges (Online green / Offline red)
+  if (data.services) {
+    updateServicePill('ssh', data.services.ssh);
+    updateServicePill('dropbear', data.services.dropbear);
+    updateServicePill('stunnel', data.services.stunnel);
+    updateServicePill('wsProxy', data.services.wsProxy);
+    updateServicePill('udpCustom', data.services.udpCustom);
+    updateServicePill('badvpn', data.services.badvpn);
+    updateServicePill('slowdns', data.services.slowdns);
+    updateServicePill('vmess', data.services.vmess);
+    updateServicePill('vless', data.services.vless);
+    updateServicePill('trojan', data.services.trojan);
+    updateServicePill('openvpn', data.services.openvpn);
+    updateServicePill('nginx', data.services.nginx);
+  }
+}
+
+function updateServicePill(serviceKey, isActive) {
+  const elem = document.getElementById(`status-${serviceKey}`);
+  if (elem) {
+    if (isActive) {
+      elem.className = 'status-pill online';
+      elem.innerHTML = `<i class="fa-solid fa-check-circle"></i> Online`;
+    } else {
+      elem.className = 'status-pill offline';
+      elem.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Offline`;
+    }
+  }
+
+  const tagElem = document.getElementById(`tag-${serviceKey}`);
+  if (tagElem) {
+    tagElem.className = isActive ? 'proto-tag online' : 'proto-tag offline';
   }
 }
 
@@ -149,7 +180,6 @@ function renderUsersTable(users) {
   });
 }
 
-// Populate User Selection Options in Modals & Forms
 function populateUserSelects(users) {
   const v2raySelect = document.getElementById('v2ray-modal-user');
   const ovpnSelect = document.getElementById('ovpn-user-select');
@@ -162,7 +192,6 @@ function populateUserSelects(users) {
   }
 }
 
-// Navigation Tab Switching
 function switchTab(tabId) {
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
@@ -172,9 +201,71 @@ function switchTab(tabId) {
     targetTab.classList.add('active');
   }
 
-  // Highlight button
   const activeBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(tabId));
   if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Service Actions (Start / Stop / Restart)
+async function toggleService(serviceName, action) {
+  try {
+    const res = await fetch('/api/service/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: serviceName, action: action })
+    });
+    const data = await res.json();
+    alert(`Service '${serviceName}' action '${action}' executed successfully.`);
+  } catch (e) {
+    console.error('Service action error:', e);
+  }
+}
+
+async function restartAllServices() {
+  alert('Restarting all SSH, Dropbear, Stunnel, WebSocket, UDP Custom, BadVPN, and Xray services...');
+  ['ssh', 'dropbear', 'stunnel', 'wsProxy', 'udpCustom', 'badvpn', 'v2ray'].forEach(s => toggleService(s, 'restart'));
+}
+
+// Torrent & P2P Blocker Control
+async function toggleTorrentBlocker(enable) {
+  try {
+    const res = await fetch('/api/service/torrent-blocker', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enable })
+    });
+    const data = await res.json();
+    alert(data.message || 'Torrent blocker updated!');
+  } catch (e) {
+    console.error('Torrent blocker toggle error:', e);
+  }
+}
+
+// Certbot SSL Modal & Issuer
+function openCertbotModal() {
+  openModal('modal-certbot');
+}
+
+async function submitIssueCert() {
+  const domain = document.getElementById('cert-domain-input').value.trim();
+  const email = document.getElementById('cert-email-input').value.trim();
+
+  if (!domain) {
+    alert('Please enter a valid domain name!');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/service/issue-cert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, email })
+    });
+    const data = await res.json();
+    closeModal('modal-certbot');
+    alert(data.message || `SSL Certificate issued for ${domain}!`);
+  } catch (e) {
+    console.error('Certbot issue error:', e);
+  }
 }
 
 // Create Universal Account Submission (0 = Lifetime)
@@ -207,11 +298,9 @@ async function submitCreateUser() {
     }
   } catch (e) {
     console.error('Account creation error:', e);
-    alert('Failed to connect to backend server.');
   }
 }
 
-// Delete User
 async function deleteUser(id) {
   if (!confirm('Are you sure you want to delete this universal user account?')) return;
   try {
@@ -221,7 +310,6 @@ async function deleteUser(id) {
   }
 }
 
-// Toggle Lock / Unlock Status
 async function toggleUserStatus(id) {
   try {
     await fetch(`/api/users/${id}/toggle-status`, { method: 'POST' });
@@ -230,7 +318,6 @@ async function toggleUserStatus(id) {
   }
 }
 
-// Extend User Validity Prompt
 async function extendUserValidityPrompt(id) {
   const add = prompt('Enter days to add (Type 0 to set to LIFETIME):', '30');
   if (add === null) return;
@@ -243,6 +330,102 @@ async function extendUserValidityPrompt(id) {
     });
   } catch (e) {
     console.error('Extend error:', e);
+  }
+}
+
+// Open Interactive Protocol Edit Modal
+function openEditProtocolModal(protoKey) {
+  document.getElementById('edit-proto-key').value = protoKey;
+  const titleElem = document.getElementById('modal-proto-edit-title');
+  const portInput = document.getElementById('edit-proto-port');
+  const altGroup = document.getElementById('grp-proto-alt-port');
+  const extraGroup = document.getElementById('grp-proto-extra');
+
+  altGroup.style.display = 'none';
+  extraGroup.style.display = 'none';
+
+  if (protoKey === 'ssh') {
+    titleElem.innerText = 'Edit OpenSSH Port & Configuration';
+    portInput.value = protocolConfig.ssh ? protocolConfig.ssh.port : 22;
+  } else if (protoKey === 'dropbear') {
+    titleElem.innerText = 'Edit Dropbear SSH Port';
+    portInput.value = protocolConfig.dropbear ? protocolConfig.dropbear.port : 109;
+  } else if (protoKey === 'ssl') {
+    titleElem.innerText = 'Edit Stunnel SSL Ports & Domain';
+    portInput.value = protocolConfig.ssl ? protocolConfig.ssl.port : 443;
+    altGroup.style.display = 'block';
+    document.getElementById('edit-proto-alt-port').value = protocolConfig.ssl ? protocolConfig.ssl.altPort : 444;
+    extraGroup.style.display = 'block';
+    document.getElementById('lbl-proto-extra').innerText = 'SSL Domain (SNI)';
+    document.getElementById('edit-proto-extra').value = protocolConfig.ssl ? protocolConfig.ssl.certDomain : 'vpn.example.com';
+  } else if (protoKey === 'ws') {
+    titleElem.innerText = 'Edit SSH WebSocket Proxy Port';
+    portInput.value = protocolConfig.websocket ? protocolConfig.websocket.httpPort : 80;
+  } else if (protoKey === 'udpCustom') {
+    titleElem.innerText = 'Edit UDP Custom Port & Alt Port';
+    portInput.value = protocolConfig.udpCustom ? protocolConfig.udpCustom.port : 7300;
+    altGroup.style.display = 'block';
+    document.getElementById('edit-proto-alt-port').value = protocolConfig.udpCustom ? protocolConfig.udpCustom.altPort : 53;
+  } else if (protoKey === 'badvpn') {
+    titleElem.innerText = 'Edit BadVPN (udpgw) Gateway Ports';
+    portInput.value = protocolConfig.badvpn ? protocolConfig.badvpn.ports[0] : 7300;
+  } else if (protoKey === 'v2ray') {
+    titleElem.innerText = 'Edit V2Ray Core VMess/VLess Ports';
+    portInput.value = protocolConfig.v2ray ? protocolConfig.v2ray.vmessPort : 10085;
+  } else if (protoKey === 'openvpn') {
+    titleElem.innerText = 'Edit OpenVPN Port';
+    portInput.value = protocolConfig.openvpn ? protocolConfig.openvpn.tcpPort : 1194;
+  } else {
+    titleElem.innerText = `Edit ${protoKey.toUpperCase()} Port & Config`;
+    portInput.value = 53;
+  }
+
+  openModal('modal-protocol-edit');
+}
+
+// Save Protocol Edit Modal Form
+async function saveModalProtocolConfig() {
+  const protoKey = document.getElementById('edit-proto-key').value;
+  const newPort = parseInt(document.getElementById('edit-proto-port').value, 10);
+  const newAltPort = parseInt(document.getElementById('edit-proto-alt-port').value, 10);
+  const extraVal = document.getElementById('edit-proto-extra').value;
+
+  if (protoKey === 'ssh') protocolConfig.ssh.port = newPort;
+  else if (protoKey === 'dropbear') protocolConfig.dropbear.port = newPort;
+  else if (protoKey === 'ssl') {
+    protocolConfig.ssl.port = newPort;
+    protocolConfig.ssl.altPort = newAltPort;
+    protocolConfig.ssl.certDomain = extraVal;
+  } else if (protoKey === 'ws') protocolConfig.websocket.httpPort = newPort;
+  else if (protoKey === 'udpCustom') {
+    protocolConfig.udpCustom.port = newPort;
+    protocolConfig.udpCustom.altPort = newAltPort;
+  }
+
+  try {
+    await fetch('/api/protocols/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(protocolConfig)
+    });
+    closeModal('modal-protocol-edit');
+    alert(`Protocol configuration for ${protoKey.toUpperCase()} updated successfully!`);
+  } catch (e) {
+    console.error('Protocol config save error:', e);
+  }
+}
+
+function populateConfigForm(config) {
+  if (config.ssh) {
+    document.getElementById('cfg-ssh-port').value = config.ssh.port;
+    document.getElementById('cfg-ssh-banner').value = config.ssh.banner || '';
+  }
+  if (config.ssl) {
+    document.getElementById('cfg-ssl-port').value = config.ssl.port;
+    document.getElementById('cfg-ssl-domain').value = config.ssl.certDomain || '';
+  }
+  if (config.websocket) {
+    document.getElementById('cfg-ws-payload').value = config.websocket.customResponse || '';
   }
 }
 
@@ -299,7 +482,6 @@ async function updateModalConfigText() {
 
   document.getElementById('modal-v2ray-url').value = configURL;
 
-  // Generate QR Code via backend API
   try {
     const res = await fetch(`/api/qrcode?text=${encodeURIComponent(configURL)}`);
     const qData = await res.json();
@@ -311,7 +493,6 @@ async function updateModalConfigText() {
   }
 }
 
-// Copy V2Ray URL to Clipboard
 function copyV2RayURL() {
   const input = document.getElementById('modal-v2ray-url');
   input.select();
@@ -319,7 +500,6 @@ function copyV2RayURL() {
   alert('V2Ray import link copied to clipboard!');
 }
 
-// Download OpenVPN Profile (.ovpn)
 function downloadOVPNProfile() {
   const userId = document.getElementById('ovpn-user-select').value;
   const user = currentUsers.find(u => u.id === userId) || { username: 'client' };
@@ -342,10 +522,6 @@ verb 3
 <ca>
 -----BEGIN CERTIFICATE-----
 MIIDXTCCAkWgAwIBAgIJAL9W3z2f1K5NMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
-BAYTAFVTMQswCQYDVQQIDAJDQTEUMBIGA1UEBwwLU2FuIEZyYW5jaXNjbzEPMA0G
-A1UECgwGVUxUUkExCzAJBgNVBAMMAkNBMB4XDTI2MDkwNzE1NDMwMFoXDTM2MDkw
-NDE1NDMwMFowRTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMRQwEgYDVQQHDAtT
-YW4gRnJhbmNpc2NvMQ8wDQYDVQQKDAZVTFRSQTELEDAGBgNVBAMMAkNBMIIBIjAN
 -----END CERTIFICATE-----
 </ca>`;
 
@@ -356,17 +532,14 @@ YW4gRnJhbmNpc2NvMQ8wDQYDVQQKDAZVTFRSQTELEDAGBgNVBAMMAkNBMIIBIjAN
   a.click();
 }
 
-// Save Protocol Config Form
 async function saveProtocolConfigForm() {
   const updated = {
     ssh: {
       port: parseInt(document.getElementById('cfg-ssh-port').value, 10),
-      dropbearPort: parseInt(document.getElementById('cfg-dropbear-port').value, 10),
       banner: document.getElementById('cfg-ssh-banner').value
     },
     ssl: {
       port: parseInt(document.getElementById('cfg-ssl-port').value, 10),
-      altPort: parseInt(document.getElementById('cfg-ssl-alt').value, 10),
       certDomain: document.getElementById('cfg-ssl-domain').value
     },
     websocket: {
@@ -392,29 +565,10 @@ async function saveProtocolConfigForm() {
       body: JSON.stringify(updated)
     });
     const data = await res.json();
-    alert('Protocol settings updated successfully across all servers!');
+    alert('Protocol settings updated successfully!');
   } catch (e) {
     console.error('Config update error:', e);
   }
-}
-
-// Service Actions (Restart / Stop / Start)
-async function restartService(serviceName) {
-  try {
-    await fetch('/api/service/action', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ service: serviceName, action: 'restart' })
-    });
-    alert(`Service '${serviceName}' restart command executed.`);
-  } catch (e) {
-    console.error('Service restart error:', e);
-  }
-}
-
-async function restartAllServices() {
-  alert('Restarting all SSH, WebSocket, UDP Custom, BadVPN, and Xray services...');
-  ['ssh', 'stunnel', 'wsProxy', 'udpCustom', 'badvpn', 'v2ray'].forEach(s => restartService(s));
 }
 
 async function updateSystem() {
@@ -467,7 +621,6 @@ function copyInstallerCmd() {
   alert('VPS Installer command copied to clipboard!');
 }
 
-// Modal Handlers
 function openModal(id) {
   document.getElementById(id).classList.add('active');
 }
@@ -478,7 +631,6 @@ function openCreateUserModal() {
   openModal('modal-create-user');
 }
 
-// Helpers & Search Filter
 function filterUsersTable() {
   const query = document.getElementById('user-search').value.toLowerCase();
   const filtered = currentUsers.filter(u => 

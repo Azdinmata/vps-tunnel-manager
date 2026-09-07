@@ -1,8 +1,14 @@
 {
   "ssh": {
     "port": 22,
-    "dropbearPort": 109,
+    "rootLogin": true,
+    "passwordAuth": true,
     "banner": "Welcome to Ultra VPS SSH Tunnel Server"
+  },
+  "dropbear": {
+    "port": 109,
+    "altPort": 143,
+    "maxSessions": 100
   },
   "ssl": {
     "port": 443,
@@ -18,27 +24,59 @@
     "port": 7300,
     "altPort": 53,
     "excludePorts": "22,53,80,443",
-    "buffer": "4096"
+    "buffer": "4096",
+    "obfsKey": "zivpn-ultra-secret"
   },
   "badvpn": {
     "ports": [7100, 7200, 7300],
-    "maxClients": 500
+    "maxClients": 500,
+    "maxConnectionsPerIp": 5
   },
   "slowdns": {
     "domain": "ns.vpn.example.com",
     "pubkey": "4f8a1e9b2c3d4e5f6a7b8c9d0e1f2a3b",
-    "dnsPort": 53
+    "privkey": "9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+    "dnsPort": 53,
+    "targetSshPort": 22
   },
   "v2ray": {
     "vmessPort": 10085,
     "vlessPort": 20085,
     "trojanPort": 30085,
     "shadowsocksPort": 40085,
+    "sniDomain": "cloudflare.com",
+    "grpcServiceName": "trojan-grpc",
+    "xtlsFlow": "xtls-rprx-vision",
     "tlsEnabled": true
   },
   "openvpn": {
     "tcpPort": 1194,
     "udpPort": 1194,
-    "cipher": "AES-256-GCM"
+    "cipher": "AES-256-GCM",
+    "dnsServer1": "1.1.1.1",
+    "dnsServer2": "8.8.8.8"
+  },
+  "nginx": {
+    "httpPort": 80,
+    "httpsPort": 443,
+    "domain": "vpn.example.com",
+    "proxyTargetPort": 3000
+  },
+  "certbot": {
+    "email": "admin@example.com",
+    "domain": "vpn.example.com",
+    "autoRenew": true
+  },
+  "torrentBlocker": {
+    "enabled": true,
+    "blockP2P": true,
+    "blockDHT": true,
+    "blockedPorts": "6881-6889,6969,51413"
+  },
+  "fail2ban": {
+    "enabled": true,
+    "maxRetry": 3,
+    "findTime": 600,
+    "banTime": 3600
   }
 }

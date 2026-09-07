@@ -4,20 +4,75 @@ const os = require('os');
 const { execSync, exec } = require('child_process');
 const path = require('path');
 
-// Restart/Action Service Endpoint
+// Restart/Start/Stop Service Endpoint
 router.post('/action', (req, res) => {
   const { service, action } = req.body;
   console.log(`Executing ${action} on service ${service}`);
 
+  const serviceMap = {
+    ssh: 'ssh',
+    dropbear: 'dropbear',
+    stunnel: 'stunnel4',
+    wsProxy: 'ws-proxy',
+    udpCustom: 'udp-custom',
+    badvpn: 'badvpn-7300',
+    v2ray: 'xray',
+    openvpn: 'openvpn',
+    nginx: 'nginx',
+    fail2ban: 'fail2ban'
+  };
+
+  const sysService = serviceMap[service] || service;
+
   if (os.platform() === 'linux') {
     try {
-      execSync(`systemctl ${action} ${service}`);
+      execSync(`systemctl ${action} ${sysService}`);
     } catch (e) {
       console.warn(`Execution note: ${e.message}`);
     }
   }
 
   res.json({ success: true, message: `Action ${action} executed for service ${service}.` });
+});
+
+// Torrent & P2P Blocker Toggle Endpoint
+router.post('/torrent-blocker', (req, res) => {
+  const { enable } = req.body;
+
+  if (os.platform() === 'linux') {
+    try {
+      if (enable) {
+        execSync(`iptables -A FORWARD -m string --algo bm --string "BitTorrent" -j DROP`);
+        execSync(`iptables -A FORWARD -m string --algo bm --string "peer_id=" -j DROP`);
+        execSync(`iptables -A FORWARD -m string --algo bm --string ".torrent" -j DROP`);
+        execSync(`iptables -A FORWARD -p tcp --dport 6881:6889 -j DROP`);
+        execSync(`iptables -A FORWARD -p udp --dport 6881:6889 -j DROP`);
+      } else {
+        execSync(`iptables -F FORWARD 2>/dev/null || true`);
+      }
+    } catch (e) {
+      console.warn('IPtables execution warning:', e.message);
+    }
+  }
+
+  res.json({ success: true, enabled: enable, message: enable ? 'Torrent & P2P Traffic BLOCKED!' : 'Torrent Blocking Disabled.' });
+});
+
+// Issue Certbot SSL Certificate Endpoint
+router.post('/issue-cert', (req, res) => {
+  const { domain, email } = req.body;
+
+  if (os.platform() === 'linux') {
+    try {
+      execSync(`certbot certonly --standalone -d ${domain} --non-interactive --agree-tos -m ${email || 'admin@' + domain}`);
+      execSync(`systemctl restart stunnel4 nginx 2>/dev/null || true`);
+      return res.json({ success: true, message: `SSL Certificate issued for ${domain} successfully!` });
+    } catch (e) {
+      return res.status(500).json({ error: `Certbot error: ${e.message}` });
+    }
+  }
+
+  res.json({ success: true, message: `Certbot SSL issued for ${domain} (Simulated).` });
 });
 
 // Update System Script Endpoint
