@@ -74,3 +74,14 @@ To launch the interactive CLI control panel in root shell:
 ```bash
 manager
 ```
+
+---
+
+## 🔐 Web Dashboard Admin Authentication
+
+All dashboard API endpoints and live telemetry are protected by an admin login screen.
+
+- **Default credentials (development):** `admin` / `admin123`
+- **On the VPS:** the installer generates a random password and sets it via the `ADMIN_PASSWORD` environment variable in `/etc/systemd/system/vps-web-dashboard.service` (shown at the end of `install.sh` output).
+- To change it manually: `systemctl edit vps-web-dashboard` and set `Environment=ADMIN_PASSWORD=your_strong_password`, then `systemctl restart vps-web-dashboard`.
+- ALWAYS override the default password before exposing the dashboard to the internet.

@@ -89,7 +89,8 @@ cd /usr/local/vps-manager
 npm install --production
 
 # Create Systemd Background Daemon (Runs Web Dashboard 24/7 on Port 3000 automatically)
-cat << 'EOF' > /etc/systemd/system/vps-web-dashboard.service
+ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | head -c 20)
+cat << EOF > /etc/systemd/system/vps-web-dashboard.service
 [Unit]
 Description=Ultra VPS Tunnel Manager Web Dashboard
 After=network.target
@@ -103,6 +104,8 @@ Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=ADMIN_USER=admin
+Environment=ADMIN_PASSWORD=$ADMIN_PASS
 
 [Install]
 WantedBy=multi-user.target
@@ -191,5 +194,8 @@ echo -e "${CYAN}🌐 Web Dashboard Live URL (Accessible on ANY Device):${NC}"
 echo -e "   ${YELLOW}http://${SERVER_IP}:3000${NC}"
 echo -e "\n${CYAN}💻 Terminal CLI Menu Command:${NC}"
 echo -e "   Type '${GREEN}menu${CYAN}' (or 'manager') in root shell anytime."
+echo -e "\n${CYAN}🔐 Web Dashboard Admin Login:${NC}"
+echo -e "   Username: ${YELLOW}admin${NC}"
+echo -e "   Password: ${YELLOW}${ADMIN_PASS}${NC} (stored in /etc/systemd/system/vps-web-dashboard.service)"
 echo -e "${GREEN}=================================================================${NC}"
 
