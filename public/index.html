@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultra VPS SSH & Multi-Protocol Tunnel Manager</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- TOP TASK MANAGER & SYSTEM MONITOR -->
+    <header class="top-task-manager">
+      <div class="header-branding">
+        <div class="logo-icon">
+          <i class="fa-solid fa-server"></i>
+        </div>
+        <div class="logo-text">
+          <h1>ULTRA VPS MANAGER</h1>
+          <span class="vps-badge"><i class="fa-solid fa-microchip"></i> <span id="arch-badge">AMD64 / x86_64</span></span>
+          <span class="status-online"><i class="fa-solid fa-circle"></i> Live Sync</span>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Meters -->
+      <div class="telemetry-bar">
+        <!-- CPU Metric -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span><i class="fa-solid fa-microchip color-cyan"></i> CPU Load</span>
+            <strong id="cpu-pct">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div id="cpu-bar" class="progress-fill fill-cyan" style="width: 0%;"></div>
+          </div>
+          <small id="cpu-model">Detecting CPU...</small>
+        </div>
+
+        <!-- RAM Metric -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span><i class="fa-solid fa-memory color-purple"></i> RAM Usage</span>
+            <strong id="ram-pct">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div id="ram-bar" class="progress-fill fill-purple" style="width: 0%;"></div>
+          </div>
+          <small><span id="ram-used">0</span> / <span id="ram-total">0</span> GB</small>
+        </div>
+
+        <!-- Network Bandwidth Metric -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span><i class="fa-solid fa-network-wired color-emerald"></i> Bandwidth Rate</span>
+            <span class="net-indicator"><i class="fa-solid fa-arrow-down color-emerald"></i> <b id="net-rx">0.0</b> MB/s | <i class="fa-solid fa-arrow-up color-rose"></i> <b id="net-tx">0.0</b> MB/s</span>
+          </div>
+          <div class="progress-track">
+            <div id="net-bar" class="progress-fill fill-emerald" style="width: 45%;"></div>
+          </div>
+          <small>Total Tx/Rx: <span id="net-total">241 GB</span></small>
+        </div>
+
+        <!-- Active Connections & Disk Metric -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span><i class="fa-solid fa-users color-rose"></i> Active Tunnels</span>
+            <strong id="active-users-count" class="badge-count">0</strong>
+          </div>
+          <div class="storage-info">
+            <small><i class="fa-solid fa-hard-drive"></i> Disk: <span id="disk-used">18.4</span> GB / <span id="disk-total">50</span> GB</small>
+            <small><i class="fa-solid fa-clock"></i> Uptime: <span id="uptime-str">00d 00h</span></small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="header-actions">
+        <button class="btn btn-sm btn-glass" onclick="rebootServer()"><i class="fa-solid fa-power-off color-rose"></i> Reboot</button>
+        <button class="btn btn-sm btn-glass" onclick="clearCache()"><i class="fa-solid fa-broom color-amber"></i> Clear Cache</button>
+        <button class="btn btn-sm btn-gradient" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> New Universal Account</button>
+      </div>
+    </header>
+
+    <!-- MAIN BODY NAVIGATION & CONTENT -->
+    <div class="main-layout">
+      
+      <!-- CATEGORY NAVIGATION SIDEBAR -->
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">MANAGEMENT CATEGORIES</div>
+        <button class="nav-item active" onclick="switchTab('dashboard')">
+          <i class="fa-solid fa-gauge-high"></i> <span>Dashboard & Services</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('users')">
+          <i class="fa-solid fa-users-gear"></i> <span>Universal Accounts</span>
+          <span class="tab-badge" id="nav-user-badge">0</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('ssh-ws')">
+          <i class="fa-solid fa-terminal"></i> <span>SSH & WebSocket</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('udp-badvpn')">
+          <i class="fa-solid fa-bolt"></i> <span>UDP Custom & BadVPN</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('v2ray')">
+          <i class="fa-solid fa-shield-halved"></i> <span>V2Ray / Xray Suite</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('openvpn-dns')">
+          <i class="fa-solid fa-lock"></i> <span>OpenVPN & SlowDNS</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('installer')">
+          <i class="fa-solid fa-code"></i> <span>VPS Installer Script</span>
+        </button>
+      </nav>
+
+      <!-- TAB CONTENT PANELS -->
+      <main class="content-area">
+
+        <!-- TAB 1: DASHBOARD & SERVICES OVERVIEW -->
+        <section id="tab-dashboard" class="tab-page active">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-gauge-high color-cyan"></i> Tunnel Services & Telemetry Control</h2>
+            <button class="btn btn-secondary btn-sm" onclick="restartAllServices()"><i class="fa-solid fa-rotate"></i> Restart All Services</button>
+          </div>
+
+          <!-- Services Grid Tiles -->
+          <div class="services-grid" id="services-container">
+            <!-- SSH Service Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-terminal color-cyan"></i>
+                  <div>
+                    <h3>OpenSSH Server</h3>
+                    <span class="service-port">Ports: 22, 109</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">Standard SSH protocol for direct shell tunneling and Dropbear proxy connections.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('ssh')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('ssh-ws')"><i class="fa-solid fa-gear"></i> Configure</button>
+              </div>
+            </div>
+
+            <!-- SSH SSL / Stunnel Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-lock color-purple"></i>
+                  <div>
+                    <h3>SSH SSL / Stunnel4</h3>
+                    <span class="service-port">Ports: 443, 444</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">Encrypted SSL/TLS tunnel wrapper for bypassing SNI & DPI inspect filters.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('stunnel')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('ssh-ws')"><i class="fa-solid fa-gear"></i> Cert Manager</button>
+              </div>
+            </div>
+
+            <!-- SSH WebSocket Proxy -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-globe color-emerald"></i>
+                  <div>
+                    <h3>SSH WebSocket Proxy</h3>
+                    <span class="service-port">Ports: 80, 8880, 2082</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">HTTP/HTTPS WebSocket proxy with 101 Switching Protocols custom response payload builder.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('wsProxy')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('ssh-ws')"><i class="fa-solid fa-pen-to-square"></i> Payload Editor</button>
+              </div>
+            </div>
+
+            <!-- UDP Custom Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-bolt color-amber"></i>
+                  <div>
+                    <h3>UDP Custom (ZiVPN)</h3>
+                    <span class="service-port">Listen Port: 7300 / 53</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">High-performance UDP tunnel for mobile connection stabilization and zero-delay gaming.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('udpCustom')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('udp-badvpn')"><i class="fa-solid fa-sliders"></i> Buffer Tuning</button>
+              </div>
+            </div>
+
+            <!-- BadVPN UDPGW Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-gamepad color-rose"></i>
+                  <div>
+                    <h3>BadVPN (udpgw)</h3>
+                    <span class="service-port">Ports: 7100, 7200, 7300</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">UDP gateway daemon enabling UDP packet transmission for gaming & WhatsApp/VoIP calls.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('badvpn')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('udp-badvpn')"><i class="fa-solid fa-network-wired"></i> Ports</button>
+              </div>
+            </div>
+
+            <!-- Xray / V2Ray Core Card -->
+            <div class="service-card">
+              <div class="service-card-header">
+                <div class="service-title">
+                  <i class="fa-solid fa-shield-halved color-cyan"></i>
+                  <div>
+                    <h3>Xray / V2Ray Core</h3>
+                    <span class="service-port">VMess / VLess / Trojan</span>
+                  </div>
+                </div>
+                <span class="status-pill online"><i class="fa-solid fa-check-circle"></i> Active</span>
+              </div>
+              <p class="service-desc">Next-gen proxy core handling VMess, VLess XTLS, Trojan, Shadowsocks, and gRPC CDN routes.</p>
+              <div class="service-actions">
+                <button class="btn btn-xs btn-outline" onclick="restartService('v2ray')"><i class="fa-solid fa-rotate"></i> Restart</button>
+                <button class="btn btn-xs btn-outline" onclick="switchTab('v2ray')"><i class="fa-solid fa-list-check"></i> Protocols</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: UNIVERSAL ACCOUNTS MANAGER -->
+        <section id="tab-users" class="tab-page">
+          <div class="section-header">
+            <div>
+              <h2><i class="fa-solid fa-users-gear color-purple"></i> Universal Single Account Manager</h2>
+              <p class="subtitle">Accounts created here work across <b>ALL protocols</b> simultaneously (SSH, UDP Custom, BadVPN, WebSocket, V2Ray, OpenVPN, SlowDNS).</p>
+            </div>
+            <button class="btn btn-gradient" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Create Universal Account</button>
+          </div>
+
+          <div class="table-card">
+            <div class="table-search-bar">
+              <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="user-search" placeholder="Search username or UUID..." onkeyup="filterUsersTable()">
+              </div>
+              <div class="table-stats">
+                <span>Total Accounts: <strong id="total-users-stat">0</strong></span>
+                <span class="separator">|</span>
+                <span class="color-amber">Lifetime Accounts: <strong id="lifetime-users-stat">0</strong></span>
+              </div>
+            </div>
+
+            <table class="custom-table" id="users-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Password</th>
+                  <th>V2Ray UUID</th>
+                  <th>Max Logins</th>
+                  <th>Expiration</th>
+                  <th>Protocols Access</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <!-- User rows dynamically injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TAB 3: SSH & WEBSOCKET SETTINGS -->
+        <section id="tab-ssh-ws" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-terminal color-cyan"></i> SSH & WebSocket Tunnel Configuration</h2>
+            <button class="btn btn-gradient btn-sm" onclick="saveProtocolConfigForm()"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+          </div>
+
+          <div class="config-grid">
+            <!-- SSH Ports Config -->
+            <div class="config-card">
+              <h3><i class="fa-solid fa-plug color-cyan"></i> OpenSSH & Dropbear Ports</h3>
+              <div class="form-group">
+                <label>Primary SSH Port</label>
+                <input type="number" id="cfg-ssh-port" value="22">
+              </div>
+              <div class="form-group">
+                <label>Dropbear Alternative Port</label>
+                <input type="number" id="cfg-dropbear-port" value="109">
+              </div>
+              <div class="form-group">
+                <label>SSH Connection Banner Text (/etc/issue.net)</label>
+                <textarea id="cfg-ssh-banner" rows="3">Welcome to Ultra VPS Tunnel Server! Multi-device connected successfully.</textarea>
+              </div>
+            </div>
+
+            <!-- SSL / Stunnel Config -->
+            <div class="config-card">
+              <h3><i class="fa-solid fa-shield-virus color-purple"></i> SSH SSL / Stunnel4 Settings</h3>
+              <div class="form-group">
+                <label>SSL Stunnel Port (SNI / TLS)</label>
+                <input type="number" id="cfg-ssl-port" value="443">
+              </div>
+              <div class="form-group">
+                <label>Secondary SSL Port</label>
+                <input type="number" id="cfg-ssl-alt" value="444">
+              </div>
+              <div class="form-group">
+                <label>SSL Domain Name (Certbot / Let's Encrypt)</label>
+                <input type="text" id="cfg-ssl-domain" value="vpn.yourdomain.com">
+              </div>
+            </div>
+
+            <!-- WebSocket Payload Builder -->
+            <div class="config-card full-width">
+              <h3><i class="fa-solid fa-code color-emerald"></i> SSH WebSocket HTTP Payload Editor</h3>
+              <p class="card-hint">Customize HTTP response headers returned by the Python/Node WS Proxy server to bypass ISP inspection filters.</p>
+              <div class="form-group">
+                <label>HTTP Response Header Payload</label>
+                <textarea id="cfg-ws-payload" rows="4" class="code-font">HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Server: Cloudflare-Net
+Content-Type: text/html; charset=UTF-8
+
+</textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: UDP CUSTOM & BADVPN -->
+        <section id="tab-udp-badvpn" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-bolt color-amber"></i> UDP Custom (ZiVPN) & BadVPN udpgw Setup</h2>
+            <button class="btn btn-gradient btn-sm" onclick="saveProtocolConfigForm()"><i class="fa-solid fa-floppy-disk"></i> Save UDP Config</button>
+          </div>
+
+          <div class="config-grid">
+            <!-- UDP Custom Config -->
+            <div class="config-card">
+              <h3><i class="fa-solid fa-wifi color-amber"></i> UDP Custom Server Settings</h3>
+              <div class="form-group">
+                <label>UDP Custom Listen Port</label>
+                <input type="number" id="cfg-udp-port" value="7300">
+              </div>
+              <div class="form-group">
+                <label>DNS / Fallback UDP Port</label>
+                <input type="number" id="cfg-udp-alt" value="53">
+              </div>
+              <div class="form-group">
+                <label>Excluded Ports List</label>
+                <input type="text" id="cfg-udp-exclude" value="22,53,80,443">
+              </div>
+              <div class="form-group">
+                <label>Buffer Size (Bytes)</label>
+                <select id="cfg-udp-buffer">
+                  <option value="2048">2048 Bytes (Standard)</option>
+                  <option value="4096" selected>4096 Bytes (High Performance Gaming)</option>
+                  <option value="8192">8192 Bytes (Ultra Bandwidth)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- BadVPN UDPGW Config -->
+            <div class="config-card">
+              <h3><i class="fa-solid fa-gamepad color-rose"></i> BadVPN (udpgw) Ports & Limits</h3>
+              <div class="form-group">
+                <label>UDP Gateway Active Ports</label>
+                <input type="text" id="cfg-badvpn-ports" value="7100, 7200, 7300">
+              </div>
+              <div class="form-group">
+                <label>Max UDP Clients</label>
+                <input type="number" id="cfg-badvpn-max" value="500">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: V2RAY / XRAY SUITE -->
+        <section id="tab-v2ray" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-shield-halved color-cyan"></i> V2Ray / Xray Multi-Protocol Suite</h2>
+          </div>
+
+          <!-- Protocol Cards Grid -->
+          <div class="v2ray-grid">
+            <div class="v2ray-card">
+              <div class="v2ray-card-header">
+                <span class="protocol-badge vmess">VMess</span>
+                <h3>VMess WS + TLS</h3>
+              </div>
+              <p>WebSocket transport with Cloudflare CDN integration and SNI spoofing.</p>
+              <div class="v2ray-meta">
+                <span>Port: <b>10085</b></span>
+                <span>Security: <b>Auto</b></span>
+              </div>
+              <button class="btn btn-sm btn-outline block-btn" onclick="generateV2RayModal('vmess')"><i class="fa-solid fa-qrcode"></i> Get VMess Link & QR</button>
+            </div>
+
+            <div class="v2ray-card">
+              <div class="v2ray-card-header">
+                <span class="protocol-badge vless">VLess</span>
+                <h3>VLess XTLS / Direct</h3>
+              </div>
+              <p>Lightweight zero-overhead protocol with XTLS Vision flow control.</p>
+              <div class="v2ray-meta">
+                <span>Port: <b>20085</b></span>
+                <span>Flow: <b>xtls-rprx-vision</b></span>
+              </div>
+              <button class="btn btn-sm btn-outline block-btn" onclick="generateV2RayModal('vless')"><i class="fa-solid fa-qrcode"></i> Get VLess Link & QR</button>
+            </div>
+
+            <div class="v2ray-card">
+              <div class="v2ray-card-header">
+                <span class="protocol-badge trojan">Trojan</span>
+                <h3>Trojan gRPC</h3>
+              </div>
+              <p>Camouflages traffic as HTTPS website visits to resist active probing.</p>
+              <div class="v2ray-meta">
+                <span>Port: <b>30085</b></span>
+                <span>Transport: <b>gRPC</b></span>
+              </div>
+              <button class="btn btn-sm btn-outline block-btn" onclick="generateV2RayModal('trojan')"><i class="fa-solid fa-qrcode"></i> Get Trojan Link & QR</button>
+            </div>
+
+            <div class="v2ray-card">
+              <div class="v2ray-card-header">
+                <span class="protocol-badge ss">Shadowsocks</span>
+                <h3>Shadowsocks 2022</h3>
+              </div>
+              <p>Fast AEAD encryption protocol designed for low latency mobile access.</p>
+              <div class="v2ray-meta">
+                <span>Port: <b>40085</b></span>
+                <span>Cipher: <b>2022-blake3-aes-128-gcm</b></span>
+              </div>
+              <button class="btn btn-sm btn-outline block-btn" onclick="generateV2RayModal('ss')"><i class="fa-solid fa-qrcode"></i> Get SS Link & QR</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 6: OPENVPN & SLOWDNS -->
+        <section id="tab-openvpn-dns" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-lock color-purple"></i> OpenVPN & SlowDNS Server</h2>
+          </div>
+
+          <div class="config-grid">
+            <div class="config-card">
+              <h3><i class="fa-solid fa-file-arrow-down color-purple"></i> OpenVPN Client Exporter</h3>
+              <p>Download pre-configured `.ovpn` profile files with integrated CA certificates and unified PAM authentication.</p>
+              <div class="form-group">
+                <label>Target User</label>
+                <select id="ovpn-user-select">
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <button class="btn btn-gradient block-btn" onclick="downloadOVPNProfile()"><i class="fa-solid fa-download"></i> Download .OVPN File</button>
+            </div>
+
+            <div class="config-card">
+              <h3><i class="fa-solid fa-dns color-cyan"></i> SlowDNS (DNSTT) Settings</h3>
+              <div class="form-group">
+                <label>Nameserver Subdomain (NS Record)</label>
+                <input type="text" id="cfg-dns-domain" value="ns.yourdomain.com">
+              </div>
+              <div class="form-group">
+                <label>Public Key (DNSTT Key)</label>
+                <input type="text" id="cfg-dns-key" value="4f8a1e9b2c3d4e5f6a7b8c9d0e1f2a3b" readonly>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 7: VPS INSTALLER SCRIPT GENERATOR -->
+        <section id="tab-installer" class="tab-page">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-code color-emerald"></i> Automated Linux VPS Deployment Script</h2>
+          </div>
+
+          <div class="installer-card">
+            <div class="installer-banner">
+              <i class="fa-solid fa-terminal icon-large color-cyan"></i>
+              <div>
+                <h3>One-Line Automated Linux VPS Auto-Installer</h3>
+                <p>Supports <b>Ubuntu 20.04 / 22.04 / 24.04</b> and <b>Debian 10 / 11 / 12</b> on <b>AMD64 (x86_64)</b> and <b>ARM64</b> processors.</p>
+              </div>
+            </div>
+
+            <div class="code-box">
+              <div class="code-box-header">
+                <span><i class="fa-solid fa-prompt"></i> Run in Root Shell (Linux VPS)</span>
+                <button class="btn btn-xs btn-outline" onclick="copyInstallerCmd()"><i class="fa-solid fa-copy"></i> Copy Command</button>
+              </div>
+              <pre id="installer-command">curl -sSL https://raw.githubusercontent.com/azzeddin/vps-tunnel-manager/main/scripts/install.sh | bash</pre>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE UNIVERSAL USER MODAL -->
+  <div id="modal-create-user" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-plus color-cyan"></i> Create Universal Multi-Protocol Account</h3>
+        <button class="close-btn" onclick="closeModal('modal-create-user')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="new-username" placeholder="e.g. client_vip">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="text" id="new-password" placeholder="e.g. Pass1234!">
+        </div>
+        <div class="form-group">
+          <label>Max Concurrent Device Logins (Multi-IP Limit)</label>
+          <input type="number" id="new-max-logins" value="2" min="1" max="100">
+        </div>
+        <div class="form-group">
+          <label>Duration Validity (Days) <span class="badge-lifetime-hint">Enter <b>0</b> for LIFETIME (Never Expires)</span></label>
+          <input type="number" id="new-duration" value="30" min="0" placeholder="Type 0 for Lifetime">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-create-user')">Cancel</button>
+        <button class="btn btn-gradient" onclick="submitCreateUser()"><i class="fa-solid fa-check"></i> Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: V2RAY CONFIG DISPLAY / QR CODE MODAL -->
+  <div id="modal-v2ray-config" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3 id="modal-v2ray-title"><i class="fa-solid fa-qrcode color-cyan"></i> Client Connection Config & QR Code</h3>
+        <button class="close-btn" onclick="closeModal('modal-v2ray-config')">&times;</button>
+      </div>
+      <div class="modal-body v2ray-modal-body">
+        <div class="qr-display-box">
+          <img id="modal-qr-img" src="" alt="QR Code">
+          <small>Scan with V2RayNG, NekoBox, HTTP Injector, or v2rayN app</small>
+        </div>
+        <div class="config-text-box">
+          <label>Selected User Account:</label>
+          <select id="v2ray-modal-user" onchange="updateModalConfigText()">
+            <!-- Populated by JS -->
+          </select>
+
+          <label>Client Protocol Import URL:</label>
+          <div class="copy-input-group">
+            <input type="text" id="modal-v2ray-url" readonly>
+            <button class="btn btn-gradient btn-sm" onclick="copyV2RayURL()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-v2ray-config')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

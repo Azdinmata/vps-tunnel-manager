@@ -1,0 +1,44 @@
+{
+  "ssh": {
+    "port": 22,
+    "dropbearPort": 109,
+    "banner": "Welcome to Ultra VPS SSH Tunnel Server"
+  },
+  "ssl": {
+    "port": 443,
+    "altPort": 444,
+    "certDomain": "vpn.example.com"
+  },
+  "websocket": {
+    "httpPort": 80,
+    "httpsPort": 8880,
+    "customResponse": "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n"
+  },
+  "udpCustom": {
+    "port": 7300,
+    "altPort": 53,
+    "excludePorts": "22,53,80,443",
+    "buffer": "4096"
+  },
+  "badvpn": {
+    "ports": [7100, 7200, 7300],
+    "maxClients": 500
+  },
+  "slowdns": {
+    "domain": "ns.vpn.example.com",
+    "pubkey": "4f8a1e9b2c3d4e5f6a7b8c9d0e1f2a3b",
+    "dnsPort": 53
+  },
+  "v2ray": {
+    "vmessPort": 10085,
+    "vlessPort": 20085,
+    "trojanPort": 30085,
+    "shadowsocksPort": 40085,
+    "tlsEnabled": true
+  },
+  "openvpn": {
+    "tcpPort": 1194,
+    "udpPort": 1194,
+    "cipher": "AES-256-GCM"
+  }
+}
