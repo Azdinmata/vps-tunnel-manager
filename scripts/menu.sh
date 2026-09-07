@@ -116,14 +116,17 @@ create_universal_account() {
   read -p " Enter Duration in Days (Type 0 for LIFETIME): " days
   read -p " Enter Max Bandwidth Limit in GB (Type 0 for UNLIMITED): " bw_gb
 
+  grep -qxF '/bin/false' /etc/shells 2>/dev/null || echo '/bin/false' >> /etc/shells 2>/dev/null
+  grep -qxF '/usr/sbin/nologin' /etc/shells 2>/dev/null || echo '/usr/sbin/nologin' >> /etc/shells 2>/dev/null
+
   if [ "$days" -eq 0 ] 2>/dev/null; then
     EXP_STR="LIFETIME (Never Expires)"
-    useradd -M -s /bin/false "$username" 2>/dev/null
+    useradd -M -s /bin/false "$username" 2>/dev/null || usermod -s /bin/false "$username" 2>/dev/null
     chage -E -1 "$username" 2>/dev/null
   else
     EXP_DATE=$(date -d "+$days days" +%Y-%m-%d)
     EXP_STR="$EXP_DATE ($days days)"
-    useradd -e "$EXP_DATE" -M -s /bin/false "$username" 2>/dev/null
+    useradd -e "$EXP_DATE" -M -s /bin/false "$username" 2>/dev/null || usermod -e "$EXP_DATE" -s /bin/false "$username" 2>/dev/null
   fi
 
   if [ "$bw_gb" -eq 0 ] 2>/dev/null || [ -z "$bw_gb" ]; then

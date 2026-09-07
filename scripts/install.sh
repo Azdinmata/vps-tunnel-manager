@@ -60,14 +60,127 @@ if ! grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
   sysctl -p 2>/dev/null || true
 fi
 
-# Configure OpenSSH Banner & Dropbear
+# Ensure PAM Shells compatibility for Tunnel Accounts
+echo -e "\n${YELLOW}[2.5/8] Configuring PAM Shells & SSH Tunnel Settings...${NC}"
+grep -qxF '/bin/false' /etc/shells 2>/dev/null || echo '/bin/false' >> /etc/shells
+grep -qxF '/usr/sbin/nologin' /etc/shells 2>/dev/null || echo '/usr/sbin/nologin' >> /etc/shells
+
+# Configure OpenSSH Banner & Tunnel Parameters
 echo -e "\n${YELLOW}[3/8] Configuring OpenSSH & Dropbear...${NC}"
 cat << 'EOF' > /etc/issue.net
 <p style="text-align:center;"><b><font color="#00F0FF">ULTRA VPS MULTI-PROTOCOL SERVER</font></b><br><font color="#A855F7">Universal Account Active | No Torrenting / Spamming Allowed</font></p>
 EOF
 
 sed -i 's/#Banner none/Banner \/etc\/issue.net/g' /etc/ssh/sshd_config 2>/dev/null || true
+sed -i 's/#AllowTcpForwarding yes/AllowTcpForwarding yes/g' /etc/ssh/sshd_config 2>/dev/null || true
+sed -i 's/#GatewayPorts no/GatewayPorts yes/g' /etc/ssh/sshd_config 2>/dev/null || true
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config 2>/dev/null || true
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config 2>/dev/null || true
+grep -q "AllowTcpForwarding" /etc/ssh/sshd_config || echo "AllowTcpForwarding yes" >> /etc/ssh/sshd_config
+grep -q "MaxStartups" /etc/ssh/sshd_config || echo "MaxStartups 100:30:200" >> /etc/ssh/sshd_config
+
 systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
+
+# Dropbear Setup
+cat << 'EOF' > /etc/default/dropbear
+NO_START=0
+DROPBEAR_PORT=109
+DROPBEAR_EXTRA_ARGS="-p 143 -p 109"
+DROPBEAR_BANNER="/etc/issue.net"
+EOF
+systemctl restart dropbear 2>/dev/null || service dropbear restart 2>/dev/null || true
+
+# Deploy WebSocket HTTP Proxy Daemon for Dark Tunnel / HTTP Injector
+echo -e "\n${YELLOW}[3.5/8] Deploying SSH WebSocket HTTP Proxy (Ports 80 & 8080)...${NC}"
+cat << 'EOF' > /usr/local/bin/vps-ws-proxy
+#!/usr/bin/env python3
+import socket, threading, select, sys
+
+class ProxyServer:
+    def __init__(self, port, target_host='127.0.0.1', target_port=22):
+        self.port = port
+        self.target_host = target_host
+        self.target_port = target_port
+
+    def start(self):
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(('0.0.0.0', self.port))
+        server.listen(100)
+        while True:
+            try:
+                client_sock, _ = server.accept()
+                threading.Thread(target=self.handle_client, args=(client_sock,)).start()
+            except Exception:
+                pass
+
+    def handle_client(self, client_sock):
+        try:
+            client_sock.settimeout(10)
+            req = client_sock.recv(4096).decode('utf-8', errors='ignore')
+            client_sock.settimeout(None)
+            if "Upgrade" in req or "GET" in req or "POST" in req or "HTTP" in req:
+                client_sock.sendall(b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n")
+            
+            target_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            target_sock.connect((self.target_host, self.target_port))
+            
+            sockets = [client_sock, target_sock]
+            while True:
+                readable, _, _ = select.select(sockets, [], [], 60)
+                if not readable: break
+                for s in readable:
+                    data = s.recv(8192)
+                    if not data: return
+                    if s is client_sock: target_sock.sendall(data)
+                    else: client_sock.sendall(data)
+        except Exception:
+            pass
+        finally:
+            try: client_sock.close()
+            except: pass
+
+if __name__ == '__main__':
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 80
+    ProxyServer(port).start()
+EOF
+chmod +x /usr/local/bin/vps-ws-proxy
+
+cat << EOF > /etc/systemd/system/vps-ws-proxy-80.service
+[Unit]
+Description=VPS WebSocket HTTP Proxy Port 80
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/vps-ws-proxy 80
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat << EOF > /etc/systemd/system/vps-ws-proxy-8080.service
+[Unit]
+Description=VPS WebSocket HTTP Proxy Port 8080
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/vps-ws-proxy 8080
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload 2>/dev/null || true
+systemctl enable --now vps-ws-proxy-80 2>/dev/null || true
+systemctl enable --now vps-ws-proxy-8080 2>/dev/null || true
+systemctl restart vps-ws-proxy-80 2>/dev/null || true
+systemctl restart vps-ws-proxy-8080 2>/dev/null || true
 
 # Stunnel4 Setup
 echo -e "\n${YELLOW}[4/8] Configuring SSL Stunnel4...${NC}"
@@ -92,6 +205,7 @@ fi
 
 systemctl enable stunnel4 2>/dev/null || systemctl enable stunnel 2>/dev/null || true
 systemctl restart stunnel4 2>/dev/null || systemctl restart stunnel 2>/dev/null || service stunnel4 restart 2>/dev/null || true
+
 
 # Deploy Web Dashboard Project to /usr/local/vps-manager & Run npm install automatically
 echo -e "\n${YELLOW}[5/8] Deploying Web Dashboard & Automatically Installing Dependencies...${NC}"

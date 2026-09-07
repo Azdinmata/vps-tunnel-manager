@@ -106,7 +106,18 @@ class UserService {
     if (os.platform() === 'linux') {
       try {
         const safeUser = username.replace(/[^a-zA-Z0-9_-]/g, '');
-        execSync(`useradd -e ${isLifetime ? '""' : expiryDate.slice(0,10)} -M -s /bin/false "${safeUser}"`);
+        // Ensure /bin/false is in /etc/shells
+        try {
+          execSync(`grep -qxF '/bin/false' /etc/shells || echo '/bin/false' >> /etc/shells`);
+          execSync(`grep -qxF '/usr/sbin/nologin' /etc/shells || echo '/usr/sbin/nologin' >> /etc/shells`);
+        } catch (e) {}
+
+        if (isLifetime) {
+          execSync(`useradd -M -s /bin/false "${safeUser}" 2>/dev/null || usermod -s /bin/false "${safeUser}" 2>/dev/null`);
+          execSync(`chage -E -1 "${safeUser}" 2>/dev/null || true`);
+        } else {
+          execSync(`useradd -e "${expiryDate.slice(0,10)}" -M -s /bin/false "${safeUser}" 2>/dev/null || usermod -e "${expiryDate.slice(0,10)}" -s /bin/false "${safeUser}" 2>/dev/null`);
+        }
         execSync(`echo "${safeUser}:${password}" | chpasswd`);
       } catch (e) {
         console.error('Linux OS useradd error:', e.message);
