@@ -164,6 +164,7 @@ function renderUsersTable(users) {
         <div style="display: flex; gap: 4px;">
           <button class="btn btn-xs btn-outline" title="Toggle Lock" onclick="toggleUserStatus('${user.id}')"><i class="fa-solid fa-${user.status === 'active' ? 'lock' : 'lock-open'}"></i></button>
           <button class="btn btn-xs btn-outline" title="Extend Validity" onclick="extendUserValidityPrompt('${user.id}')"><i class="fa-solid fa-calendar-plus"></i></button>
+          <button class="btn btn-xs btn-gradient" title="Account Info & Protocol Connection Guide" onclick="openAccountGuideModal('${user.id}')"><i class="fa-solid fa-circle-info"></i> Guide</button>
           <button class="btn btn-xs btn-secondary" title="Get V2Ray / OpenVPN Config" onclick="openV2RayModalForUser('${user.id}')"><i class="fa-solid fa-qrcode"></i></button>
           <button class="btn btn-xs btn-glass" style="color: var(--rose);" title="Delete" onclick="deleteUser('${user.id}')"><i class="fa-solid fa-trash"></i></button>
         </div>
@@ -178,14 +179,55 @@ function populateUserSelects(users) {
   const ovpnSelect = document.getElementById('ovpn-user-select');
 
   if (v2raySelect) {
-    v2raySelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username} (${u.isLifetime ? 'Lifetime' : u.durationDays + ' days'})</option>`).join('');
+    v2raySelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
   }
   if (ovpnSelect) {
     ovpnSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
   }
 }
 
-function switchTab(tabId) {
+async function createNewUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const maxLogins = document.getElementById('new-max-logins').value;
+  const durationDays = document.getElementById('new-duration').value;
+
+  if (!username || !password) {
+    alert('Please provide both username and password!');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/users/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, maxLogins, durationDays })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      alert(`Error: ${data.error}`);
+    } else {
+      closeModal('modal-create-user');
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-password').value = '';
+      
+      const newUser = data.user || {
+        id: data.id || username,
+        username: username,
+        password: password,
+        uuid: data.uuid || 'e4a781b2-93c4-4b52-a1e9-8f7d6c5b4a3e',
+        durationDays: parseInt(durationDays, 10),
+        isLifetime: parseInt(durationDays, 10) === 0
+      };
+
+      alert(`Universal Account '${username}' created successfully! Opening Protocol Info & Connection Guide...`);
+      openAccountGuideModal(newUser);
+    }
+  } catch (e) {
+    console.error('Account creation error:', e);
+  }
+}function switchTab(tabId) {
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
 
@@ -636,4 +678,73 @@ function setupEventListeners() {
       event.target.classList.remove('active');
     }
   };
+}
+
+function switchGuideTab(tabId) {
+  document.querySelectorAll('#modal-account-guide .guide-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('#modal-account-guide .guide-tab-content').forEach(content => content.classList.remove('active'));
+  
+  const targetBtn = document.querySelector(`#modal-account-guide .guide-tab-btn[onclick*="${tabId}"]`);
+  if (targetBtn) targetBtn.classList.add('active');
+  
+  const targetContent = document.getElementById(tabId);
+  if (targetContent) targetContent.classList.add('active');
+}
+
+function openAccountGuideModal(userIdOrUser) {
+  let user = null;
+  if (typeof userIdOrUser === 'string') {
+    user = currentUsers.find(u => u.id === userIdOrUser);
+  } else if (userIdOrUser && typeof userIdOrUser === 'object') {
+    user = userIdOrUser;
+  }
+  if (!user) return;
+
+  const host = window.location.hostname || 'YOUR_VPS_IP';
+  const sslDomain = (protocolConfig.ssl && protocolConfig.ssl.certDomain) ? protocolConfig.ssl.certDomain : host;
+
+  const elUser = document.getElementById('guide-username');
+  if (elUser) elUser.innerText = user.username;
+  const elPass = document.getElementById('guide-password');
+  if (elPass) elPass.innerText = user.password;
+  const elUuid = document.getElementById('guide-uuid');
+  if (elUuid) elUuid.innerText = user.uuid;
+
+  const elHowUser = document.getElementById('guide-how-user');
+  if (elHowUser) elHowUser.innerText = user.username;
+  const elHowPass = document.getElementById('guide-how-pass');
+  if (elHowPass) elHowPass.innerText = user.password;
+
+  const isLifetime = user.isLifetime || user.durationDays === 0;
+  const expBadge = document.getElementById('guide-exp-badge');
+  if (expBadge) {
+    expBadge.innerText = isLifetime ? 'LIFETIME' : (user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : 'ACTIVE');
+    expBadge.className = isLifetime ? 'badge-lifetime' : 'badge-active';
+  }
+
+  document.querySelectorAll('.guide-host-val').forEach(el => el.innerText = host);
+  const sslSniEl = document.getElementById('guide-ssl-sni');
+  if (sslSniEl) sslSniEl.innerText = sslDomain;
+
+  // Set V2Ray Links
+  const vmessObj = {
+    v: "2", ps: `${user.username}-VMess-WS`, add: sslDomain, port: 8443,
+    id: user.uuid, aid: 0, net: "ws", type: "none", host: sslDomain, path: "/vmess", tls: "tls"
+  };
+  const vmessUrl = `vmess://${btoa(JSON.stringify(vmessObj))}`;
+  const vlessUrl = `vless://${user.uuid}@${sslDomain}:8443?encryption=none&security=tls&type=ws&host=${sslDomain}&path=/vless#${user.username}-VLess`;
+  const trojanUrl = `trojan://${user.password}@${sslDomain}:443?security=tls&type=grpc&serviceName=trojan-grpc#${user.username}-Trojan`;
+  const ssUrl = `ss://${btoa('aes-128-gcm:' + user.password)}@${host}:8388#${user.username}-SS2022`;
+
+  const vmessInput = document.getElementById('guide-vmess-link');
+  if (vmessInput) vmessInput.value = vmessUrl;
+  const vlessInput = document.getElementById('guide-vless-link');
+  if (vlessInput) vlessInput.value = vlessUrl;
+  const trojanInput = document.getElementById('guide-trojan-link');
+  if (trojanInput) trojanInput.value = trojanUrl;
+  const ssInput = document.getElementById('guide-ss-link');
+  if (ssInput) ssInput.value = ssUrl;
+
+  openModal('modal-account-guide');
+  switchGuideTab('g-ssh');
 }

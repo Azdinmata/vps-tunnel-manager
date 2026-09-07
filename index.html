@@ -149,7 +149,6 @@
 
           <div class="services-grid" id="services-container">
             
-            <!-- 1. OpenSSH Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -170,7 +169,6 @@
               </div>
             </div>
 
-            <!-- 2. Dropbear Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -191,7 +189,6 @@
               </div>
             </div>
 
-            <!-- 3. Stunnel SSL Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -212,7 +209,6 @@
               </div>
             </div>
 
-            <!-- 4. SSH WebSocket Proxy Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -233,7 +229,6 @@
               </div>
             </div>
 
-            <!-- 5. UDP Custom Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -254,7 +249,6 @@
               </div>
             </div>
 
-            <!-- 6. BadVPN udpgw Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -275,7 +269,6 @@
               </div>
             </div>
 
-            <!-- 7. SlowDNS Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -296,7 +289,6 @@
               </div>
             </div>
 
-            <!-- 8. V2Ray VMess Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -317,7 +309,6 @@
               </div>
             </div>
 
-            <!-- 9. V2Ray VLess Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -338,7 +329,6 @@
               </div>
             </div>
 
-            <!-- 10. Trojan gRPC Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -359,7 +349,6 @@
               </div>
             </div>
 
-            <!-- 11. OpenVPN Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -380,7 +369,6 @@
               </div>
             </div>
 
-            <!-- 12. Nginx Reverse Proxy Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -401,7 +389,6 @@
               </div>
             </div>
 
-            <!-- 13. Certbot SSL Manager Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -419,7 +406,6 @@
               </div>
             </div>
 
-            <!-- 14. Torrent & P2P Blocker Card -->
             <div class="service-card">
               <div class="service-card-header">
                 <div class="service-title">
@@ -773,6 +759,171 @@ Content-Type: text/html; charset=UTF-8
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('modal-create-user')">Return / Cancel (0)</button>
         <button class="btn btn-gradient" onclick="submitCreateUser()"><i class="fa-solid fa-check"></i> Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ACCOUNT CONNECTION GUIDE & USAGE BREAKDOWN -->
+  <div id="modal-account-guide" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3 id="guide-modal-title"><i class="fa-solid fa-circle-info color-cyan"></i> Universal Account Connection Details & Guide</h3>
+        <button class="close-btn" onclick="closeModal('modal-account-guide')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="guide-user-badge">
+          <span>Account: <b id="guide-username" class="color-cyan">client</b></span>
+          <span>Password: <code id="guide-password">pass</code></span>
+          <span>V2Ray UUID: <code id="guide-uuid" class="uuid-text">uuid</code></span>
+          <span id="guide-exp-badge" class="badge-lifetime">LIFETIME</span>
+        </div>
+
+        <div class="guide-tab-nav">
+          <button class="guide-tab-btn active" onclick="switchGuideTab('g-ssh')"><i class="fa-solid fa-terminal"></i> SSH Direct / SSL</button>
+          <button class="guide-tab-btn" onclick="switchGuideTab('g-ws')"><i class="fa-solid fa-globe"></i> WebSocket</button>
+          <button class="guide-tab-btn" onclick="switchGuideTab('g-udp')"><i class="fa-solid fa-bolt"></i> UDP Custom & BadVPN</button>
+          <button class="guide-tab-btn" onclick="switchGuideTab('g-dns')"><i class="fa-solid fa-network-wired"></i> SlowDNS</button>
+          <button class="guide-tab-btn" onclick="switchGuideTab('g-v2ray')"><i class="fa-solid fa-shield-halved"></i> V2Ray / Xray / Trojan</button>
+          <button class="guide-tab-btn" onclick="switchGuideTab('g-openvpn')"><i class="fa-solid fa-key"></i> OpenVPN</button>
+        </div>
+
+        <!-- Guide Panel 1: SSH Direct & SSL -->
+        <div id="g-ssh" class="guide-tab-content active">
+          <h4><i class="fa-solid fa-terminal color-cyan"></i> SSH Direct & SSL Stunnel Connection Settings</h4>
+          <ul class="guide-param-list">
+            <li><b>Host / Server IP:</b> <span class="guide-host-val">YOUR_VPS_IP</span></li>
+            <li><b>SSH Direct Ports:</b> <code>22</code>, <code>109</code>, <code>143</code></li>
+            <li><b>Dropbear SSH Ports:</b> <code>110</code>, <code>456</code></li>
+            <li><b>SSL Stunnel Ports:</b> <code>443</code>, <code>444</code></li>
+            <li><b>SSL SNI Host:</b> <code id="guide-ssl-sni">vpn.yourdomain.com</code></li>
+          </ul>
+          <div class="guide-how-to">
+            <h5><i class="fa-solid fa-circle-question color-amber"></i> How to connect in HTTP Injector / Bitvise / Termius:</h5>
+            <ol>
+              <li>Select <b>SSH Direct</b> or <b>SSL/TLS (Stunnel)</b> mode in your app.</li>
+              <li>Enter Server IP, Port <code>22</code> (SSH Direct) or <code>443</code> (SSL).</li>
+              <li>Enter Username: <b id="guide-how-user">client</b> and Password: <code id="guide-how-pass">pass</code>.</li>
+              <li>For SSL mode, set the SNI Bug Host to your SSL domain name.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Guide Panel 2: SSH WebSocket -->
+        <div id="g-ws" class="guide-tab-content">
+          <h4><i class="fa-solid fa-globe color-emerald"></i> SSH WebSocket Payload & Settings</h4>
+          <ul class="guide-param-list">
+            <li><b>WS HTTP Port:</b> <code>80</code> | <b>WS HTTPS Port:</b> <code>8880</code></li>
+            <li><b>WebSocket Path:</b> <code>/</code></li>
+          </ul>
+          <label>Payload String for HTTP Injector / NetMod / KPN Tunnel:</label>
+          <div class="copy-input-group">
+            <input type="text" id="guide-ws-payload-str" value="GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf][crlf]" readonly>
+            <button class="btn btn-gradient btn-sm" onclick="copyInput('guide-ws-payload-str')"><i class="fa-solid fa-copy"></i> Copy Payload</button>
+          </div>
+          <div class="guide-how-to" style="margin-top: 1rem;">
+            <h5><i class="fa-solid fa-circle-question color-amber"></i> How to use:</h5>
+            <ol>
+              <li>Paste the payload string above into your HTTP Injector Payload field.</li>
+              <li>Set SSH Server Host to your Bug Host IP and Port to <code>80</code> (HTTP) or <code>8880</code> (HTTPS).</li>
+              <li>Enter your SSH Username and Password to connect.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Guide Panel 3: UDP Custom & BadVPN -->
+        <div id="g-udp" class="guide-tab-content">
+          <h4><i class="fa-solid fa-bolt color-amber"></i> UDP Custom (ZiVPN) & BadVPN UDPGW Settings</h4>
+          <ul class="guide-param-list">
+            <li><b>Server IP / Host:</b> <span class="guide-host-val">YOUR_VPS_IP</span></li>
+            <li><b>UDP Custom Port:</b> <code>7300</code></li>
+            <li><b>Fallback DNS Port:</b> <code>53</code></li>
+            <li><b>BadVPN UDPGW Ports:</b> <code>7100</code>, <code>7200</code>, <code>7300</code></li>
+            <li><b>Buffer Size:</b> <code>4096 Bytes</code></li>
+          </ul>
+          <div class="guide-how-to">
+            <h5><i class="fa-solid fa-circle-question color-amber"></i> How to use in ZiVPN App (Android):</h5>
+            <ol>
+              <li>Download and open the <b>ZiVPN App</b> or <b>UDP Custom App</b> on Android.</li>
+              <li>Enter Server IP, Port <code>7300</code>, Username, and Password.</li>
+              <li>Tap <b>CONNECT</b> for zero-delay gaming and low ping UDP tunneling.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Guide Panel 4: SlowDNS -->
+        <div id="g-dns" class="guide-tab-content">
+          <h4><i class="fa-solid fa-network-wired color-rose"></i> SlowDNS (DNSTT) Settings</h4>
+          <ul class="guide-param-list">
+            <li><b>NS Subdomain:</b> <code id="guide-dns-ns">dns.yourdomain.com</code></li>
+            <li><b>DNSTT Public Key:</b> <code id="guide-dns-pubkey">11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff</code></li>
+            <li><b>DNS Resolver:</b> <code>1.1.1.1</code> or <code>8.8.8.8</code></li>
+          </ul>
+          <div class="guide-how-to">
+            <h5><i class="fa-solid fa-circle-question color-amber"></i> How to use in SlowDNS Client App:</h5>
+            <ol>
+              <li>Open SlowDNS app on Android/Windows.</li>
+              <li>Enter NS Subdomain, Public Key, and SSH credentials.</li>
+              <li>Select DNS Resolver <code>1.1.1.1</code> to tunnel SSH traffic over DNS queries.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Guide Panel 5: V2Ray / Xray / Trojan / Shadowsocks -->
+        <div id="g-v2ray" class="guide-tab-content">
+          <h4><i class="fa-solid fa-shield-halved color-cyan"></i> V2Ray / Xray / Trojan Import Links</h4>
+          <div class="form-group">
+            <label>VMess WS URL:</label>
+            <div class="copy-input-group">
+              <input type="text" id="guide-vmess-link" readonly>
+              <button class="btn btn-gradient btn-sm" onclick="copyInput('guide-vmess-link')"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>VLess XTLS URL:</label>
+            <div class="copy-input-group">
+              <input type="text" id="guide-vless-link" readonly>
+              <button class="btn btn-gradient btn-sm" onclick="copyInput('guide-vless-link')"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Trojan gRPC URL:</label>
+            <div class="copy-input-group">
+              <input type="text" id="guide-trojan-link" readonly>
+              <button class="btn btn-gradient btn-sm" onclick="copyInput('guide-trojan-link')"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Shadowsocks 2022 URL:</label>
+            <div class="copy-input-group">
+              <input type="text" id="guide-ss-link" readonly>
+              <button class="btn btn-gradient btn-sm" onclick="copyInput('guide-ss-link')"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+          </div>
+          <p class="card-hint"><i class="fa-solid fa-lightbulb color-amber"></i> Copy any URL above and tap <b>"Import config from Clipboard"</b> inside V2RayNG, NekoBox, Shadowrocket, or Outline.</p>
+        </div>
+
+        <!-- Guide Panel 6: OpenVPN -->
+        <div id="g-openvpn" class="guide-tab-content">
+          <h4><i class="fa-solid fa-key color-purple"></i> OpenVPN Profile Exporter & Usage</h4>
+          <ul class="guide-param-list">
+            <li><b>OpenVPN UDP Port:</b> <code>1194</code></li>
+            <li><b>OpenVPN TCP Port:</b> <code>443</code></li>
+            <li><b>Authentication:</b> Universal Account Username & Password</li>
+          </ul>
+          <div class="guide-how-to" style="margin-bottom: 1rem;">
+            <h5><i class="fa-solid fa-circle-question color-amber"></i> How to use in OpenVPN Connect:</h5>
+            <ol>
+              <li>Click the button below to download your customized <code>.ovpn</code> profile file.</li>
+              <li>Open <b>OpenVPN Connect</b> on Android, iOS, or Windows.</li>
+              <li>Import the <code>.ovpn</code> profile file and enter your Account Password when prompted.</li>
+            </ol>
+          </div>
+          <button class="btn btn-gradient block-btn" onclick="downloadOVPNProfile()"><i class="fa-solid fa-download"></i> Download .OVPN Profile File</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-account-guide')">Return / Close (0)</button>
       </div>
     </div>
   </div>

@@ -100,13 +100,48 @@ create_universal_account() {
 
   echo "$username:$password" | chpasswd
   UUID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "e4a781b2-93c4-4b52-a1e9-8f7d6c5b4a3e")
+  SERVER_IP=$(curl -s https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
+  SSL_DOMAIN=$(cat /etc/vps-tunnel/ssl_domain 2>/dev/null || echo "$SERVER_IP")
 
-  echo -e "\n${GREEN}[SUCCESS] Account Created Successfully!${NC}"
-  echo -e "${CYAN}Username:${NC} $username"
-  echo -e "${CYAN}Password:${NC} $password"
-  echo -e "${CYAN}V2Ray UUID:${NC} $UUID"
-  echo -e "${CYAN}Validity:${NC} $EXP_STR"
-  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
+  VMESS_JSON="{\"v\":\"2\",\"ps\":\"$username-VMess\",\"add\":\"$SSL_DOMAIN\",\"port\":8443,\"id\":\"$UUID\",\"aid\":0,\"net\":\"ws\",\"type\":\"none\",\"path\":\"/vmess\",\"tls\":\"tls\"}"
+  VMESS_B64=$(echo -n "$VMESS_JSON" | base64 -w 0 2>/dev/null || echo -n "$VMESS_JSON" | base64)
+  VMESS_URL="vmess://$VMESS_B64"
+  VLESS_URL="vless://$UUID@$SSL_DOMAIN:8443?encryption=none&security=tls&type=ws&path=/vless#$username-VLess"
+  TROJAN_URL="trojan://$password@$SSL_DOMAIN:443?security=tls&type=grpc&serviceName=trojan-grpc#$username-Trojan"
+  SS_PASS_B64=$(echo -n "aes-128-gcm:$password" | base64 -w 0 2>/dev/null || echo -n "aes-128-gcm:$password" | base64)
+  SS_URL="ss://$SS_PASS_B64@$SERVER_IP:8388#$username-SS2022"
+
+  echo -e "\n${GREEN}=================================================================${NC}"
+  echo -e "       ${GREEN}[SUCCESS] UNIVERSAL ACCOUNT CREATED SUCCESSFULLY!${NC}"
+  echo -e "${GREEN}=================================================================${NC}"
+  echo -e " ${CYAN}Username:${NC}    $username"
+  echo -e " ${CYAN}Password:${NC}    $password"
+  echo -e " ${CYAN}V2Ray UUID:${NC}  $UUID"
+  echo -e " ${CYAN}Validity:${NC}    $EXP_STR"
+  echo -e " ${CYAN}Max Devices:${NC} $max_logins"
+  echo -e "${CYAN}-----------------------------------------------------------------${NC}"
+  echo -e "      ${YELLOW}ALL PROTOCOLS CONFIGURATION & STEP-BY-STEP USAGE GUIDE${NC}"
+  echo -e "${CYAN}-----------------------------------------------------------------${NC}"
+  echo -e " ${GREEN}[1] OpenSSH Direct:${NC}      Host: $SERVER_IP | Ports: 22, 109, 143"
+  echo -e "     ${PURPLE}How to use:${NC}         Select SSH Direct in HTTP Injector/Bitvise."
+  echo -e " ${GREEN}[2] Dropbear SSH:${NC}        Host: $SERVER_IP | Ports: 110, 456"
+  echo -e " ${GREEN}[3] Stunnel SSL/TLS:${NC}     Host: $SERVER_IP | Ports: 443, 444 | SNI: $SSL_DOMAIN"
+  echo -e "     ${PURPLE}How to use:${NC}         Set Mode: SSL/TLS + SNI Bug Host."
+  echo -e " ${GREEN}[4] SSH WebSocket:${NC}       WS HTTP: 80 | WS HTTPS: 8880 | Path: /"
+  echo -e "     ${PURPLE}Payload String:${NC}     GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf][crlf]"
+  echo -e " ${GREEN}[5] UDP Custom (ZiVPN):${NC} Host: $SERVER_IP | UDP Port: 7300 | DNS: 53"
+  echo -e "     ${PURPLE}How to use:${NC}         Open ZiVPN App -> Enter IP, 7300, User, Pass -> Connect."
+  echo -e " ${GREEN}[6] BadVPN UDPGW:${NC}        Ports: 7100, 7200, 7300 (VoIP & Gaming Forwarder)"
+  echo -e " ${GREEN}[7] SlowDNS (DNSTT):${NC}    NS: dns.$SSL_DOMAIN | PubKey: 1122334455667788 | DNS: 1.1.1.1"
+  echo -e "     ${PURPLE}How to use:${NC}         Open SlowDNS app -> Enter NS Subdomain & PubKey."
+  echo -e " ${GREEN}[8] V2Ray VMess WS:${NC}     $VMESS_URL"
+  echo -e " ${GREEN}[9] V2Ray VLess XTLS:${NC}   $VLESS_URL"
+  echo -e " ${GREEN}[10] Trojan gRPC:${NC}       $TROJAN_URL"
+  echo -e " ${GREEN}[11] Shadowsocks 2022:${NC}  $SS_URL"
+  echo -e " ${GREEN}[12] OpenVPN (UDP/TCP):${NC} Ports: 1194 (UDP) / 443 (TCP) | PAM Auth"
+  echo -e "      ${PURPLE}How to use:${NC}        Download .ovpn profile file from Web Dashboard."
+  echo -e "${CYAN}=================================================================${NC}"
+  echo -e "\n${YELLOW}Press enter or type 0 to return to main menu...${NC}"; read
 }
 
 list_accounts() {

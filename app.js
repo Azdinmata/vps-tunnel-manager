@@ -1,6 +1,6 @@
 /* ==========================================================================
    ULTRA VPS SSH & MULTI-PROTOCOL TUNNEL MANAGER - FRONTEND LOGIC (APP.JS)
-   Handles WebSockets, Live Telemetry, Universal Accounts, Config Generators & Modals
+   Location: app.js
    ========================================================================== */
 
 let socket = null;
@@ -58,32 +58,27 @@ async function fetchTelemetryREST() {
   }
 }
 
-// Update Telemetry & Real Live Protocol Service Status Indicators
 function updateTelemetryUI(data) {
   if (!data) return;
 
-  // CPU
   const cpuPct = data.cpu ? data.cpu.usage : 15;
   document.getElementById('cpu-pct').innerText = `${cpuPct}%`;
   document.getElementById('cpu-bar').style.width = `${cpuPct}%`;
   document.getElementById('cpu-model').innerText = data.cpu ? data.cpu.model : 'AMD64 Processor';
   document.getElementById('arch-badge').innerText = data.arch || 'AMD64 / x86_64';
 
-  // RAM
   const ramPct = data.ram ? data.ram.percentage : 25;
   document.getElementById('ram-pct').innerText = `${ramPct}%`;
   document.getElementById('ram-bar').style.width = `${ramPct}%`;
   document.getElementById('ram-used').innerText = data.ram ? data.ram.used : '1.2';
   document.getElementById('ram-total').innerText = data.ram ? data.ram.total : '4.0';
 
-  // Network
   if (data.network) {
     document.getElementById('net-rx').innerText = data.network.rxSpeed;
     document.getElementById('net-tx').innerText = data.network.txSpeed;
     document.getElementById('net-total').innerText = `${data.network.totalRx} / ${data.network.totalTx}`;
   }
 
-  // Active Users & Storage
   document.getElementById('active-users-count').innerText = data.activeConnections || 0;
   if (data.disk) {
     document.getElementById('disk-used').innerText = data.disk.used;
@@ -95,7 +90,6 @@ function updateTelemetryUI(data) {
     document.getElementById('uptime-str').innerText = `${d}d ${h}h`;
   }
 
-  // Update Dynamic Protocol Live Status Badges (Online green / Offline red)
   if (data.services) {
     updateServicePill('ssh', data.services.ssh);
     updateServicePill('dropbear', data.services.dropbear);
@@ -130,7 +124,6 @@ function updateServicePill(serviceKey, isActive) {
   }
 }
 
-// Render Universal Accounts Table
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
   tbody.innerHTML = '';
@@ -171,6 +164,7 @@ function renderUsersTable(users) {
         <div style="display: flex; gap: 4px;">
           <button class="btn btn-xs btn-outline" title="Toggle Lock" onclick="toggleUserStatus('${user.id}')"><i class="fa-solid fa-${user.status === 'active' ? 'lock' : 'lock-open'}"></i></button>
           <button class="btn btn-xs btn-outline" title="Extend Validity" onclick="extendUserValidityPrompt('${user.id}')"><i class="fa-solid fa-calendar-plus"></i></button>
+          <button class="btn btn-xs btn-gradient" title="Account Info & Protocol Connection Guide" onclick="openAccountGuideModal('${user.id}')"><i class="fa-solid fa-circle-info"></i> Guide</button>
           <button class="btn btn-xs btn-secondary" title="Get V2Ray / OpenVPN Config" onclick="openV2RayModalForUser('${user.id}')"><i class="fa-solid fa-qrcode"></i></button>
           <button class="btn btn-xs btn-glass" style="color: var(--rose);" title="Delete" onclick="deleteUser('${user.id}')"><i class="fa-solid fa-trash"></i></button>
         </div>
@@ -185,10 +179,53 @@ function populateUserSelects(users) {
   const ovpnSelect = document.getElementById('ovpn-user-select');
 
   if (v2raySelect) {
-    v2raySelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username} (${u.isLifetime ? 'Lifetime' : u.durationDays + ' days'})</option>`).join('');
+    v2raySelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
   }
   if (ovpnSelect) {
     ovpnSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+  }
+}
+
+async function createNewUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const maxLogins = document.getElementById('new-max-logins').value;
+  const durationDays = document.getElementById('new-duration').value;
+
+  if (!username || !password) {
+    alert('Please provide both username and password!');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/users/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, maxLogins, durationDays })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      alert(`Error: ${data.error}`);
+    } else {
+      closeModal('modal-create-user');
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-password').value = '';
+      
+      const newUser = data.user || {
+        id: data.id || username,
+        username: username,
+        password: password,
+        uuid: data.uuid || 'e4a781b2-93c4-4b52-a1e9-8f7d6c5b4a3e',
+        durationDays: parseInt(durationDays, 10),
+        isLifetime: parseInt(durationDays, 10) === 0
+      };
+
+      alert(`Universal Account '${username}' created successfully! Opening Protocol Info & Connection Guide...`);
+      openAccountGuideModal(newUser);
+    }
+  } catch (e) {
+    console.error('Account creation error:', e);
   }
 }
 
@@ -205,7 +242,6 @@ function switchTab(tabId) {
   if (activeBtn) activeBtn.classList.add('active');
 }
 
-// Service Actions (Start / Stop / Restart)
 async function toggleService(serviceName, action) {
   try {
     const res = await fetch('/api/service/action', {
@@ -225,7 +261,6 @@ async function restartAllServices() {
   ['ssh', 'dropbear', 'stunnel', 'wsProxy', 'udpCustom', 'badvpn', 'v2ray'].forEach(s => toggleService(s, 'restart'));
 }
 
-// Torrent & P2P Blocker Control
 async function toggleTorrentBlocker(enable) {
   try {
     const res = await fetch('/api/service/torrent-blocker', {
@@ -240,7 +275,6 @@ async function toggleTorrentBlocker(enable) {
   }
 }
 
-// Certbot SSL Modal & Issuer
 function openCertbotModal() {
   openModal('modal-certbot');
 }
@@ -268,7 +302,6 @@ async function submitIssueCert() {
   }
 }
 
-// Create Universal Account Submission (0 = Lifetime)
 async function submitCreateUser() {
   const username = document.getElementById('new-username').value.trim();
   const password = document.getElementById('new-password').value.trim();
@@ -294,7 +327,18 @@ async function submitCreateUser() {
       closeModal('modal-create-user');
       document.getElementById('new-username').value = '';
       document.getElementById('new-password').value = '';
-      alert(`Universal Account '${username}' created successfully! Works across all protocols.`);
+      
+      const newUser = data.user || {
+        id: data.id || username,
+        username: username,
+        password: password,
+        uuid: data.uuid || 'e4a781b2-93c4-4b52-a1e9-8f7d6c5b4a3e',
+        durationDays: parseInt(durationDays, 10),
+        isLifetime: parseInt(durationDays, 10) === 0
+      };
+
+      alert(`Universal Account '${username}' created successfully! Opening Protocol Info & Connection Guide...`);
+      openAccountGuideModal(newUser);
     }
   } catch (e) {
     console.error('Account creation error:', e);
@@ -333,7 +377,6 @@ async function extendUserValidityPrompt(id) {
   }
 }
 
-// Open Interactive Protocol Edit Modal
 function openEditProtocolModal(protoKey) {
   document.getElementById('edit-proto-key').value = protoKey;
   const titleElem = document.getElementById('modal-proto-edit-title');
@@ -383,7 +426,6 @@ function openEditProtocolModal(protoKey) {
   openModal('modal-protocol-edit');
 }
 
-// Save Protocol Edit Modal Form
 async function saveModalProtocolConfig() {
   const protoKey = document.getElementById('edit-proto-key').value;
   const newPort = parseInt(document.getElementById('edit-proto-port').value, 10);
@@ -429,7 +471,6 @@ function populateConfigForm(config) {
   }
 }
 
-// V2Ray & Protocol Modal Link Generator
 function generateV2RayModal(protocol) {
   currentSelectedV2RayProtocol = protocol;
   openModal('modal-v2ray-config');
@@ -650,4 +691,73 @@ function setupEventListeners() {
       event.target.classList.remove('active');
     }
   };
+}
+
+function switchGuideTab(tabId) {
+  document.querySelectorAll('#modal-account-guide .guide-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('#modal-account-guide .guide-tab-content').forEach(content => content.classList.remove('active'));
+  
+  const targetBtn = document.querySelector(`#modal-account-guide .guide-tab-btn[onclick*="${tabId}"]`);
+  if (targetBtn) targetBtn.classList.add('active');
+  
+  const targetContent = document.getElementById(tabId);
+  if (targetContent) targetContent.classList.add('active');
+}
+
+function openAccountGuideModal(userIdOrUser) {
+  let user = null;
+  if (typeof userIdOrUser === 'string') {
+    user = currentUsers.find(u => u.id === userIdOrUser);
+  } else if (userIdOrUser && typeof userIdOrUser === 'object') {
+    user = userIdOrUser;
+  }
+  if (!user) return;
+
+  const host = window.location.hostname || 'YOUR_VPS_IP';
+  const sslDomain = (protocolConfig.ssl && protocolConfig.ssl.certDomain) ? protocolConfig.ssl.certDomain : host;
+
+  const elUser = document.getElementById('guide-username');
+  if (elUser) elUser.innerText = user.username;
+  const elPass = document.getElementById('guide-password');
+  if (elPass) elPass.innerText = user.password;
+  const elUuid = document.getElementById('guide-uuid');
+  if (elUuid) elUuid.innerText = user.uuid;
+
+  const elHowUser = document.getElementById('guide-how-user');
+  if (elHowUser) elHowUser.innerText = user.username;
+  const elHowPass = document.getElementById('guide-how-pass');
+  if (elHowPass) elHowPass.innerText = user.password;
+
+  const isLifetime = user.isLifetime || user.durationDays === 0;
+  const expBadge = document.getElementById('guide-exp-badge');
+  if (expBadge) {
+    expBadge.innerText = isLifetime ? 'LIFETIME' : (user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : 'ACTIVE');
+    expBadge.className = isLifetime ? 'badge-lifetime' : 'badge-active';
+  }
+
+  document.querySelectorAll('.guide-host-val').forEach(el => el.innerText = host);
+  const sslSniEl = document.getElementById('guide-ssl-sni');
+  if (sslSniEl) sslSniEl.innerText = sslDomain;
+
+  // Set V2Ray Links
+  const vmessObj = {
+    v: "2", ps: `${user.username}-VMess-WS`, add: sslDomain, port: 8443,
+    id: user.uuid, aid: 0, net: "ws", type: "none", host: sslDomain, path: "/vmess", tls: "tls"
+  };
+  const vmessUrl = `vmess://${btoa(JSON.stringify(vmessObj))}`;
+  const vlessUrl = `vless://${user.uuid}@${sslDomain}:8443?encryption=none&security=tls&type=ws&host=${sslDomain}&path=/vless#${user.username}-VLess`;
+  const trojanUrl = `trojan://${user.password}@${sslDomain}:443?security=tls&type=grpc&serviceName=trojan-grpc#${user.username}-Trojan`;
+  const ssUrl = `ss://${btoa('aes-128-gcm:' + user.password)}@${host}:8388#${user.username}-SS2022`;
+
+  const vmessInput = document.getElementById('guide-vmess-link');
+  if (vmessInput) vmessInput.value = vmessUrl;
+  const vlessInput = document.getElementById('guide-vless-link');
+  if (vlessInput) vlessInput.value = vlessUrl;
+  const trojanInput = document.getElementById('guide-trojan-link');
+  if (trojanInput) trojanInput.value = trojanUrl;
+  const ssInput = document.getElementById('guide-ss-link');
+  if (ssInput) ssInput.value = ssUrl;
+
+  openModal('modal-account-guide');
+  switchGuideTab('g-ssh');
 }
