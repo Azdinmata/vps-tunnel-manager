@@ -182,6 +182,44 @@ systemctl enable --now vps-ws-proxy-8080 2>/dev/null || true
 systemctl restart vps-ws-proxy-80 2>/dev/null || true
 systemctl restart vps-ws-proxy-8080 2>/dev/null || true
 
+# Deploy BadVPN udpgw Daemon (Port 7300 for UDP Forwarding in SSH Tunnels)
+echo -e "\n${YELLOW}[3.6/8] Deploying BadVPN udpgw Daemon (UDP Port 7300)...${NC}"
+wget -q -O /usr/local/bin/badvpn-udpgw "https://github.com/ambrop72/badvpn/raw/master/udpgw/badvpn-udpgw" 2>/dev/null || true
+chmod +x /usr/local/bin/badvpn-udpgw 2>/dev/null || true
+
+cat << EOF > /etc/systemd/system/vps-badvpn-7300.service
+[Unit]
+Description=BadVPN UDP Gateway Port 7300
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload 2>/dev/null || true
+systemctl enable --now vps-badvpn-7300 2>/dev/null || true
+systemctl restart vps-badvpn-7300 2>/dev/null || true
+
+# Deploy UDP Custom Server Config
+echo -e "\n${YELLOW}[3.7/8] Configuring UDP Custom Gateway...${NC}"
+mkdir -p /root/udp 2>/dev/null
+cat << 'EOF' > /root/udp/config.json
+{
+  "listen": ":7300",
+  "stream_buffer": 16777216,
+  "receive_buffer": 16777216,
+  "auth": {
+    "mode": "passwords"
+  }
+}
+EOF
+
 # Stunnel4 Setup
 echo -e "\n${YELLOW}[4/8] Configuring SSL Stunnel4...${NC}"
 mkdir -p /etc/stunnel /var/log/stunnel
