@@ -1,6 +1,6 @@
 /* ==========================================================================
    ULTRA VPS SSH & MULTI-PROTOCOL TUNNEL MANAGER - FRONTEND LOGIC (APP.JS)
-   Location: app.js
+   Location: public/js/app.js
    ========================================================================== */
 
 let socket = null;
@@ -9,16 +9,116 @@ let protocolConfig = {};
 let currentSelectedV2RayProtocol = 'vmess';
 
 document.addEventListener('DOMContentLoaded', () => {
-  initSocketConnection();
   setupEventListeners();
+  if (getToken()) {
+    hideLogin();
+    initSocketConnection();
+    fetchTelemetryREST();
+  } else {
+    showLogin();
+  }
 });
+
+/* ==========================================================================
+   ADMIN AUTHENTICATION HELPERS
+   ========================================================================== */
+function getToken() {
+  return localStorage.getItem('vps_admin_token');
+}
+
+function setToken(token) {
+  if (token) localStorage.setItem('vps_admin_token', token);
+  else localStorage.removeItem('vps_admin_token');
+}
+
+function showLogin() {
+  const overlay = document.getElementById('login-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function hideLogin() {
+  const overlay = document.getElementById('login-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function handleAuthError() {
+  setToken(null);
+  if (socket) { try { socket.disconnect(); } catch (e) {} }
+  socket = null;
+  showLogin();
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.innerText = 'Session expired. Please log in again.';
+}
+
+async function authFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (getToken()) headers.set('Authorization', `Bearer ${getToken()}`);
+  headers.set('Content-Type', 'application/json');
+
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    handleAuthError();
+  }
+  return res;
+}
+
+async function submitLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.innerText = '';
+
+  if (!username || !password) {
+    if (errEl) errEl.innerText = 'Enter admin username and password.';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (data.token) {
+      setToken(data.token);
+      hideLogin();
+      initSocketConnection();
+      fetchTelemetryREST();
+    } else {
+      if (errEl) errEl.innerText = data.error || 'Invalid credentials.';
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+    if (errEl) errEl.innerText = 'Login request failed.';
+  }
+}
+
+async function logoutAdmin() {
+  if (!confirm('Log out of the admin dashboard?')) return;
+  try {
+    await authFetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {}
+  setToken(null);
+  if (socket) { try { socket.disconnect(); } catch (e) {} }
+  socket = null;
+  showLogin();
+}
 
 function initSocketConnection() {
   try {
-    socket = io();
+    socket = io({ auth: { token: getToken() } });
 
     socket.on('connect', () => {
       console.log('Connected to VPS Telemetry Socket');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('Socket auth error:', err.message);
+      if (String(err.message).toLowerCase().includes('unauthorized')) {
+        handleAuthError();
+      }
     });
 
     socket.on('telemetry', (data) => {
@@ -44,11 +144,11 @@ function initSocketConnection() {
 
 async function fetchTelemetryREST() {
   try {
-    const res = await fetch('/api/telemetry');
+    const res = await authFetch('/api/telemetry');
     const data = await res.json();
     updateTelemetryUI(data);
 
-    const uRes = await fetch('/api/users');
+    const uRes = await authFetch('/api/users');
     const users = await uRes.json();
     currentUsers = users;
     renderUsersTable(users);
@@ -203,7 +303,7 @@ async function createNewUser() {
   }
 
   try {
-    const res = await fetch('/api/users/create', {
+    const res = await authFetch('/api/users/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, maxLogins, durationDays, maxBandwidthGB })
@@ -241,7 +341,7 @@ async function editUserBandwidthPrompt(id) {
   if (newLimit === null) return;
 
   try {
-    const res = await fetch(`/api/users/${id}/bandwidth`, {
+    const res = await authFetch(`/api/users/${id}/bandwidth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ maxBandwidthGB: newLimit })
@@ -252,9 +352,7 @@ async function editUserBandwidthPrompt(id) {
   } catch (e) {
     console.error('Bandwidth update error:', e);
   }
-}
-
-function switchTab(tabId) {
+}function switchTab(tabId) {
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
 
@@ -269,7 +367,7 @@ function switchTab(tabId) {
 
 async function toggleService(serviceName, action) {
   try {
-    const res = await fetch('/api/service/action', {
+    const res = await authFetch('/api/service/action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ service: serviceName, action: action })
@@ -288,7 +386,7 @@ async function restartAllServices() {
 
 async function toggleTorrentBlocker(enable) {
   try {
-    const res = await fetch('/api/service/torrent-blocker', {
+    const res = await authFetch('/api/service/torrent-blocker', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enable })
@@ -314,7 +412,7 @@ async function submitIssueCert() {
   }
 
   try {
-    const res = await fetch('/api/service/issue-cert', {
+    const res = await authFetch('/api/service/issue-cert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ domain, email })
@@ -328,13 +426,41 @@ async function submitIssueCert() {
 }
 
 async function submitCreateUser() {
-  return createNewUser();
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const maxLogins = document.getElementById('new-max-logins').value;
+  const durationDays = document.getElementById('new-duration').value;
+
+  if (!username || !password) {
+    alert('Please provide both username and password!');
+    return;
+  }
+
+  try {
+    const res = await authFetch('/api/users/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, maxLogins, durationDays })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      alert(`Error: ${data.error}`);
+    } else {
+      closeModal('modal-create-user');
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-password').value = '';
+      alert(`Universal Account '${username}' created successfully! Works across all protocols.`);
+    }
+  } catch (e) {
+    console.error('Account creation error:', e);
+  }
 }
 
 async function deleteUser(id) {
   if (!confirm('Are you sure you want to delete this universal user account?')) return;
   try {
-    await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    await authFetch(`/api/users/${id}`, { method: 'DELETE' });
   } catch (e) {
     console.error('Delete error:', e);
   }
@@ -342,7 +468,7 @@ async function deleteUser(id) {
 
 async function toggleUserStatus(id) {
   try {
-    await fetch(`/api/users/${id}/toggle-status`, { method: 'POST' });
+    await authFetch(`/api/users/${id}/toggle-status`, { method: 'POST' });
   } catch (e) {
     console.error('Status toggle error:', e);
   }
@@ -353,7 +479,7 @@ async function extendUserValidityPrompt(id) {
   if (add === null) return;
 
   try {
-    await fetch(`/api/users/${id}/extend`, {
+    await authFetch(`/api/users/${id}/extend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ additionalDays: add })
@@ -431,7 +557,7 @@ async function saveModalProtocolConfig() {
   }
 
   try {
-    await fetch('/api/protocols/config', {
+    await authFetch('/api/protocols/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(protocolConfig)
@@ -510,7 +636,7 @@ async function updateModalConfigText() {
   document.getElementById('modal-v2ray-url').value = configURL;
 
   try {
-    const res = await fetch(`/api/qrcode?text=${encodeURIComponent(configURL)}`);
+    const res = await authFetch(`/api/qrcode?text=${encodeURIComponent(configURL)}`);
     const qData = await res.json();
     if (qData.qrcode) {
       document.getElementById('modal-qr-img').src = qData.qrcode;
@@ -586,7 +712,7 @@ async function saveProtocolConfigForm() {
   };
 
   try {
-    const res = await fetch('/api/protocols/config', {
+    const res = await authFetch('/api/protocols/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updated)
@@ -601,7 +727,7 @@ async function saveProtocolConfigForm() {
 async function updateSystem() {
   if (!confirm('Are you sure you want to update the VPS Tunnel Manager to the latest version from GitHub?')) return;
   try {
-    const res = await fetch('/api/service/update', { method: 'POST' });
+    const res = await authFetch('/api/service/update', { method: 'POST' });
     const data = await res.json();
     alert(data.message || 'System update initiated! Dashboard reloading...');
     setTimeout(() => location.reload(), 3000);
@@ -618,7 +744,7 @@ async function uninstallSystem() {
     return;
   }
   try {
-    const res = await fetch('/api/service/uninstall', { method: 'POST' });
+    const res = await authFetch('/api/service/uninstall', { method: 'POST' });
     const data = await res.json();
     alert('System uninstalled and purged successfully!');
     location.reload();
@@ -629,7 +755,7 @@ async function uninstallSystem() {
 
 function rebootServer() {
   if (confirm('Are you sure you want to REBOOT the entire Linux VPS server?')) {
-    fetch('/api/service/action', {
+    authFetch('/api/service/action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ service: 'system', action: 'reboot' })
@@ -677,6 +803,13 @@ function setupEventListeners() {
       event.target.classList.remove('active');
     }
   };
+
+  document.getElementById('login-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitLogin();
+  });
+  document.getElementById('login-username').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitLogin();
+  });
 }
 
 function switchGuideTab(tabId) {

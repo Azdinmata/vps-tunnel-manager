@@ -116,12 +116,65 @@ cp /usr/local/vps-manager/scripts/menu.sh /usr/local/bin/menu
 chmod +x /usr/local/bin/menu
 ln -sf /usr/local/bin/menu /usr/local/bin/manager
 
-# Configure UFW Firewall (Allow Web Port 3000, SSH 22, SSL 443, WS 80, UDP 7300)
-ufw allow 3000/tcp 2>/dev/null
+# Configure UFW Firewall (Enabled by Default with All Protocol Ports Opened)
+echo -e "\n${YELLOW}[6/8] Configuring UFW Firewall by Default & Opening Protocol Ports...${NC}"
+ufw --force enable
+ufw default allow outgoing
 ufw allow 22/tcp 2>/dev/null
-ufw allow 443/tcp 2>/dev/null
+ufw allow 3000/tcp 2>/dev/null
 ufw allow 80/tcp 2>/dev/null
+ufw allow 443/tcp 2>/dev/null
+ufw allow 8080/tcp 2>/dev/null
+ufw allow 8880/tcp 2>/dev/null
+ufw allow 8443/tcp 2>/dev/null
+ufw allow 2082/tcp 2>/dev/null
+ufw allow 109/tcp 2>/dev/null
+ufw allow 143/tcp 2>/dev/null
+ufw allow 444/tcp 2>/dev/null
 ufw allow 7300/udp 2>/dev/null
+ufw allow 7100/udp 2>/dev/null
+ufw allow 7200/udp 2>/dev/null
+ufw allow 53/udp 2>/dev/null
+ufw allow 10085/tcp 2>/dev/null
+ufw allow 10085/udp 2>/dev/null
+ufw allow 20085/tcp 2>/dev/null
+ufw allow 20085/udp 2>/dev/null
+ufw allow 30085/tcp 2>/dev/null
+ufw allow 30085/udp 2>/dev/null
+ufw allow 40085/tcp 2>/dev/null
+ufw allow 40085/udp 2>/dev/null
+ufw allow 8388/tcp 2>/dev/null
+ufw allow 8388/udp 2>/dev/null
+ufw allow 1194/tcp 2>/dev/null
+ufw allow 1194/udp 2>/dev/null
+
+# Interactive Certbot SSL Certificate Setup
+echo -e "\n${YELLOW}[7/8] Certbot SSL Certificate Setup...${NC}"
+read -p "Enter your Domain Name for SSL Certificate (or press Enter to skip): " DOMAIN_NAME
+
+if [ -n "$DOMAIN_NAME" ]; then
+  echo -e "${CYAN}Issuing Let's Encrypt SSL Certificate for $DOMAIN_NAME...${NC}"
+  systemctl stop nginx 2>/dev/null
+  certbot certonly --standalone --non-interactive --agree-tos -m "admin@$DOMAIN_NAME" -d "$DOMAIN_NAME" --register-unsafely-without-email 2>/dev/null
+  if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+    echo -e "${GREEN}SSL Certificate successfully issued for $DOMAIN_NAME!${NC}"
+    cat << EOF > /etc/stunnel/stunnel.conf
+cert = /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+key = /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+client = no
+socket = a:SO_REUSEADDR=1
+
+[ssh-ssl]
+accept = 443
+connect = 127.0.0.1:22
+EOF
+    systemctl restart stunnel4 2>/dev/null
+  else
+    echo -e "${RED}Certbot issue attempt completed. Check DNS pointing if certificate wasn't saved.${NC}"
+  fi
+else
+  echo -e "${CYAN}Skipping SSL Domain Setup. Default self-signed certificate active.${NC}"
+fi
 
 SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}')
 
@@ -130,8 +183,13 @@ echo -e "${GREEN}===============================================================
 echo -e "${GREEN}   ULTRA VPS TUNNEL MENU INSTALLED & LAUNCHED!                  ${NC}"
 echo -e "${GREEN}=================================================================${NC}"
 echo -e "${CYAN}Processor Architecture:${NC} $ARCH_TYPE"
+echo -e "${CYAN}🛡️ UFW Firewall Status:${NC} ${GREEN}ENABLED${NC} (All Protocol Ports Opened)"
+if [ -n "$DOMAIN_NAME" ]; then
+  echo -e "${CYAN}🔒 SSL Certificate Domain:${NC} $DOMAIN_NAME"
+fi
 echo -e "${CYAN}🌐 Web Dashboard Live URL (Accessible on ANY Device):${NC}"
 echo -e "   ${YELLOW}http://${SERVER_IP}:3000${NC}"
 echo -e "\n${CYAN}💻 Terminal CLI Menu Command:${NC}"
 echo -e "   Type '${GREEN}menu${CYAN}' (or 'manager') in root shell anytime."
 echo -e "${GREEN}=================================================================${NC}"
+

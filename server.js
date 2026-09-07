@@ -9,11 +9,13 @@ const QRCode = require('qrcode');
 const { getArchitecture } = require('./src/utils/arch.detector');
 const TelemetryService = require('./src/services/telemetry.service');
 const UserService = require('./src/services/user.service');
+const { requireAuth, isValidToken } = require('./src/utils/auth');
 
 // Import Route Handlers
 const telemetryRoutes = require('./src/routes/telemetry.routes');
 const usersRoutes = require('./src/routes/users.routes');
 const servicesRoutes = require('./src/routes/services.routes');
+const authRoutes = require('./src/routes/auth.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +32,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
 // Register Modular REST Routes
+app.use('/api/auth', authRoutes);
+app.use('/api', requireAuth); // Protect all other /api endpoints behind admin token
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/service', servicesRoutes);
@@ -54,7 +58,13 @@ app.get('/api/qrcode', async (req, res) => {
   }
 });
 
-// Socket.io Real-Time Telemetry & Sync
+// Socket.io Real-Time Telemetry & Sync (requires valid admin token)
+io.use((socket, next) => {
+  const token = socket.handshake.auth && socket.handshake.auth.token;
+  if (isValidToken(token)) return next();
+  next(new Error('unauthorized'));
+});
+
 io.on('connection', (socket) => {
   console.log('Client connected to VPS Telemetry Monitor:', socket.id);
   

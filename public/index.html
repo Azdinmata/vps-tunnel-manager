@@ -78,6 +78,7 @@
       </div>
 
       <div class="header-actions">
+        <button class="btn btn-sm btn-outline" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket color-rose"></i> Logout</button>
         <button class="btn btn-sm btn-glass" onclick="updateSystem()"><i class="fa-solid fa-rotate-right color-cyan"></i> Update System</button>
         <button class="btn btn-sm btn-glass" onclick="clearCache()"><i class="fa-solid fa-broom color-amber"></i> Clear Cache</button>
         <button class="btn btn-sm btn-gradient" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> New Account</button>
@@ -999,6 +1000,19 @@ Content-Type: text/html; charset=UTF-8
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('modal-v2ray-config')">Return / Close (0)</button>
       </div>
+    </div>
+  </div>
+
+  <!-- LOGIN SCREEN (Admin Authentication) -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2>ULTRA VPS MENU</h2>
+      <p class="login-sub">Admin Authentication Required</p>
+      <input type="text" id="login-username" placeholder="Admin Username" autocomplete="username">
+      <input type="password" id="login-password" placeholder="Admin Password" autocomplete="current-password">
+      <button class="btn btn-gradient login-btn" onclick="submitLogin()"><i class="fa-solid fa-unlock"></i> Unlock Dashboard</button>
+      <p id="login-error" class="login-error"></p>
     </div>
   </div>
 
