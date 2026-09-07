@@ -1,8 +1,8 @@
 #!/bin/bash
 # ==============================================================================
 # ULTRA VPS SSH & MULTI-PROTOCOL TUNNEL MANAGER - CLI TERMINAL MENU ('manager')
-# Location: manager.sh
 # Supports: Universal Accounts, Lifetime Duration (0), AMD64 & ARM64 Processors
+# Note: Type '0' in ANY prompt/menu to return to the main menu!
 # ==============================================================================
 
 RED='\033[0;31m'
@@ -50,7 +50,7 @@ show_menu() {
     echo -e " ${GREEN}[ 10 ]${NC} Reboot VPS Server"
     echo -e " ${CYAN}[ 11 ]${NC} Update System Script (git pull)"
     echo -e " ${RED}[ 12 ] UNINSTALL & PURGE EVERYTHING${NC}"
-    echo -e " ${RED}[ 0 ] Exit Control Menu${NC}"
+    echo -e " ${RED}[ 0 ] Exit Manager${NC} ${YELLOW}(Type '0' anywhere to return here)${NC}"
     echo -e "${CYAN}=================================================================${NC}"
     read -p " Select option [0-12]: " opt
 
@@ -67,21 +67,24 @@ show_menu() {
       10) reboot_server ;;
       11) update_system ;;
       12) uninstall_system ;;
-      0) echo -e "\n${GREEN}Exiting Manager.${NC}\n"; exit 0 ;;
-      *) echo -e "\n${RED}Invalid option!${NC}"; read ;;
+      0) echo -e "\n${GREEN}Exiting Manager. Have a great day!${NC}\n"; exit 0 ;;
+      *) echo -e "\n${RED}Invalid option! Press enter or 0 to return...${NC}"; read ;;
     esac
   done
 }
 
 create_universal_account() {
   clear
-  echo -e "${CYAN}--- CREATE UNIVERSAL MULTI-PROTOCOL ACCOUNT ---${NC}\n"
-  read -p " Enter Username: " username
-  if [ -z "$username" ]; then echo -e "${RED}Username cannot be empty!${NC}"; read; return; fi
+  echo -e "${CYAN}--- CREATE UNIVERSAL MULTI-PROTOCOL ACCOUNT ---${NC}"
+  echo -e "${YELLOW}(Type 0 at any prompt to cancel and return to main menu)${NC}\n"
+  read -p " Enter Username (or 0 to cancel): " username
+  if [ "$username" = "0" ] || [ -z "$username" ]; then return; fi
 
-  if id "$username" &>/dev/null; then echo -e "${RED}User '$username' already exists!${NC}"; read; return; fi
+  if id "$username" &>/dev/null; then echo -e "${RED}User '$username' already exists!${NC}"; read -p "Press 0 to return..."; return; fi
 
   read -p " Enter Password: " password
+  if [ "$password" = "0" ]; then return; fi
+
   read -p " Enter Max Concurrent Logins (Devices): " max_logins
   read -p " Enter Duration in Days (Type 0 for LIFETIME): " days
 
@@ -103,7 +106,7 @@ create_universal_account() {
   echo -e "${CYAN}Password:${NC} $password"
   echo -e "${CYAN}V2Ray UUID:${NC} $UUID"
   echo -e "${CYAN}Validity:${NC} $EXP_STR"
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 list_accounts() {
@@ -116,12 +119,13 @@ list_accounts() {
     EXP_DISP=$([ "$EXP" = " never" ] && echo "LIFETIME" || echo $EXP | xargs)
     printf "%-18s %-16s %-38s %-18s\n" "$user" "********" "$(cat /proc/sys/kernel/random/uuid | cut -c1-18)..." "$EXP_DISP"
   done
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 lock_unlock_account() {
   clear
-  read -p " Enter Username to Lock/Unlock: " username
+  read -p " Enter Username to Lock/Unlock (or 0 to return): " username
+  if [ "$username" = "0" ] || [ -z "$username" ]; then return; fi
   if ! id "$username" &>/dev/null; then echo -e "${RED}User not found!${NC}"; read; return; fi
 
   STATUS=$(passwd -S "$username" | awk '{print $2}')
@@ -132,12 +136,13 @@ lock_unlock_account() {
     usermod -L "$username"
     echo -e "${YELLOW}User '$username' LOCKED!${NC}"
   fi
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 extend_account() {
   clear
-  read -p " Enter Username to Extend: " username
+  read -p " Enter Username to Extend (or 0 to return): " username
+  if [ "$username" = "0" ] || [ -z "$username" ]; then return; fi
   if ! id "$username" &>/dev/null; then echo -e "${RED}User not found!${NC}"; read; return; fi
 
   read -p " Enter Days to Add (Type 0 for LIFETIME): " days
@@ -149,23 +154,24 @@ extend_account() {
     chage -E "$EXP_DATE" "$username"
     echo -e "${GREEN}User '$username' extended to $EXP_DATE!${NC}"
   fi
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 delete_account() {
   clear
-  read -p " Enter Username to Delete: " username
+  read -p " Enter Username to Delete (or 0 to return): " username
+  if [ "$username" = "0" ] || [ -z "$username" ]; then return; fi
   if ! id "$username" &>/dev/null; then echo -e "${RED}User not found!${NC}"; read; return; fi
   userdel -f "$username"
   echo -e "${GREEN}User '$username' deleted!${NC}"
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 view_online_users() {
   clear
   echo -e "${CYAN}--- ACTIVE TUNNEL CONNECTIONS ---${NC}\n"
   who
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 restart_services() {
@@ -173,12 +179,13 @@ restart_services() {
   echo -e "${YELLOW}Restarting OpenSSH, Stunnel, WS Proxy, BadVPN, and Xray...${NC}"
   systemctl restart ssh dropbear stunnel4 ws-proxy badvpn-7300 xray 2>/dev/null
   echo -e "${GREEN}All services restarted successfully!${NC}"
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 generate_v2ray_links() {
   clear
-  read -p " Enter Username for V2Ray Links: " username
+  read -p " Enter Username for V2Ray Links (or 0 to return): " username
+  if [ "$username" = "0" ] || [ -z "$username" ]; then return; fi
   DOMAIN=$(curl -s ifconfig.me || echo "vpn.server.com")
   UUID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null)
 
@@ -186,19 +193,19 @@ generate_v2ray_links() {
   echo -e "${PURPLE}VMess WS:${NC} vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"$username-VMess\",\"add\":\"$DOMAIN\",\"port\":10085,\"id\":\"$UUID\",\"net\":\"ws\",\"path\":\"/vmess\",\"tls\":\"tls\"}" | base64 -w 0)"
   echo -e "\n${PURPLE}VLess XTLS:${NC} vless://$UUID@$DOMAIN:20085?security=tls&type=ws&path=/vless#$username-VLess"
   echo -e "\n${PURPLE}Trojan gRPC:${NC} trojan://pass123@$DOMAIN:30085?security=tls&type=grpc#$username-Trojan"
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 run_speedtest() {
   clear
   echo -e "${YELLOW}Running Speedtest...${NC}\n"
   curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 reboot_server() {
   clear
-  read -p " Are you sure you want to REBOOT the VPS? (y/n): " confirm
+  read -p " Are you sure you want to REBOOT the VPS? (y/n or 0 to return): " confirm
   if [ "$confirm" = "y" ]; then reboot; fi
 }
 
@@ -208,13 +215,13 @@ update_system() {
   cd /usr/local/vps-manager && git pull origin main && npm install --production
   systemctl restart vps-web-dashboard
   echo -e "${GREEN}Update completed! Dashboard restarted.${NC}"
-  read
+  echo -e "\n${YELLOW}Press enter or type 0 to return to menu...${NC}"; read
 }
 
 uninstall_system() {
   clear
   echo -e "${RED}WARNING: This will purge all services and delete the manager!${NC}"
-  read -p " Type 'PURGE' to confirm uninstallation: " confirm
+  read -p " Type 'PURGE' to confirm uninstallation (or 0 to cancel): " confirm
   if [ "$confirm" = "PURGE" ]; then
     bash /usr/local/vps-manager/scripts/uninstall.sh
     exit 0
