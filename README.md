@@ -43,10 +43,10 @@ my script/
 │   │   └── style.css          # Glassmorphism styling system
 │   └── js/
 │       └── app.js             # Dynamic client UI script
-└── scripts/
-    ├── install.sh             # Standalone Linux VPS auto-installer
-    ├── manager.sh             # Interactive terminal CLI menu ('manager' command)
-    └── auto-cleaner.sh        # Expired accounts auto-deletion cron script
+├── scripts/
+│   ├── install.sh             # Standalone Linux VPS auto-installer
+│   ├── menu.sh                # Interactive terminal CLI menu ('menu' command)
+│   └── auto-cleaner.sh        # Expired accounts auto-deletion cron script
 ```
 
 ---
@@ -72,7 +72,7 @@ curl -sSL https://raw.githubusercontent.com/Azdinmata/vps-tunnel-manager/main/sc
 ### 3. Terminal CLI Menu Command
 To launch the interactive CLI control panel in root shell:
 ```bash
-manager
+menu
 ```
 
 ---

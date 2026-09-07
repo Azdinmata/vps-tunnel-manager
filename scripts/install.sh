@@ -37,20 +37,27 @@ esac
 echo -e "${GREEN}[INFO] Detected Processor Architecture: $ARCH_TYPE${NC}"
 
 # Install Core Tools, Node.js 20 LTS & NPM automatically
-echo -e "\n${YELLOW}[1/8] Installing Core Packages, Node.js v20 LTS & NPM...${NC}"
+echo -e "\n${YELLOW}[1/8] Installing Core Packages, Node.js & NPM...${NC}"
 apt-get update -y
-apt-get install -y curl wget unzip tar net-tools iptables ufw sudo git socat python3 python3-pip cron openssl jq stunnel4 nginx dropbear fail2ban
+apt-get install -y curl wget unzip tar net-tools iptables ufw sudo git socat python3 python3-pip cron openssl jq stunnel4 nginx dropbear fail2ban nodejs npm build-essential 2>/dev/null || true
 
-# Clean install Node.js 20 LTS and NPM from official NodeSource repository
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get install -y nodejs build-essential
+# Try NodeSource v20 setup if node is missing or older
+if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
+  echo -e "${YELLOW}Installing NodeSource v20 LTS package...${NC}"
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 2>/dev/null || true
+  apt-get install -y nodejs npm build-essential 2>/dev/null || true
+fi
+
+NODE_BIN=$(command -v node || echo "/usr/bin/node")
+NPM_BIN=$(command -v npm || echo "/usr/bin/npm")
+echo -e "${GREEN}[INFO] Detected Node.js binary at: $NODE_BIN${NC}"
 
 # Enable TCP BBR Speed Optimizer
 echo -e "\n${YELLOW}[2/8] Enabling TCP BBR Speed Optimizer...${NC}"
 if ! grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
   echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
   echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-  sysctl -p
+  sysctl -p 2>/dev/null || true
 fi
 
 # Configure OpenSSH Banner & Dropbear
@@ -86,13 +93,12 @@ fi
 systemctl enable stunnel4 2>/dev/null || systemctl enable stunnel 2>/dev/null || true
 systemctl restart stunnel4 2>/dev/null || systemctl restart stunnel 2>/dev/null || service stunnel4 restart 2>/dev/null || true
 
-
 # Deploy Web Dashboard Project to /usr/local/vps-manager & Run npm install automatically
 echo -e "\n${YELLOW}[5/8] Deploying Web Dashboard & Automatically Installing Dependencies...${NC}"
 rm -rf /usr/local/vps-manager
 git clone https://github.com/Azdinmata/vps-tunnel-manager.git /usr/local/vps-manager
 cd /usr/local/vps-manager
-npm install --production
+$NPM_BIN install --production 2>/dev/null || npm install --production 2>/dev/null || npm install 2>/dev/null || true
 
 # Create Systemd Background Daemon (Runs Web Dashboard 24/7 on Port 3000 automatically)
 ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | head -c 20)
@@ -105,7 +111,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/usr/local/vps-manager
-ExecStart=/usr/bin/node /usr/local/vps-manager/server.js
+ExecStart=$NODE_BIN /usr/local/vps-manager/server.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
@@ -117,13 +123,22 @@ Environment=ADMIN_PASSWORD=$ADMIN_PASS
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable --now vps-web-dashboard
+systemctl daemon-reload 2>/dev/null || true
+systemctl enable vps-web-dashboard 2>/dev/null || true
+systemctl restart vps-web-dashboard 2>/dev/null || true
 
-# Install CLI Menu command ('menu' and 'manager' compatibility link)
+# Fallback direct background execution if systemd service is inactive
+sleep 2
+if ! netstat -tlpn 2>/dev/null | grep -q ":3000" && ! ss -tlpn 2>/dev/null | grep -q ":3000"; then
+  echo -e "${YELLOW}[INFO] Starting Web Dashboard via Nohup Daemon Fallback...${NC}"
+  pkill -f "node server.js" 2>/dev/null || true
+  nohup $NODE_BIN /usr/local/vps-manager/server.js > /var/log/vps-dashboard.log 2>&1 &
+fi
+
+# Install CLI Menu command ('menu')
 cp /usr/local/vps-manager/scripts/menu.sh /usr/local/bin/menu
 chmod +x /usr/local/bin/menu
-ln -sf /usr/local/bin/menu /usr/local/bin/manager
+rm -f /usr/local/bin/manager 2>/dev/null || true
 
 # Configure UFW Firewall (Enabled by Default with All Protocol Ports Opened)
 echo -e "\n${YELLOW}[6/8] Configuring UFW Firewall by Default & Opening Protocol Ports...${NC}"
@@ -199,7 +214,7 @@ fi
 echo -e "${CYAN}🌐 Web Dashboard Live URL (Accessible on ANY Device):${NC}"
 echo -e "   ${YELLOW}http://${SERVER_IP}:3000${NC}"
 echo -e "\n${CYAN}💻 Terminal CLI Menu Command:${NC}"
-echo -e "   Type '${GREEN}menu${CYAN}' (or 'manager') in root shell anytime."
+echo -e "   Type '${GREEN}menu${CYAN}' in root shell anytime."
 echo -e "\n${CYAN}🔐 Web Dashboard Admin Login:${NC}"
 echo -e "   Username: ${YELLOW}admin${NC}"
 echo -e "   Password: ${YELLOW}${ADMIN_PASS}${NC} (stored in /etc/systemd/system/vps-web-dashboard.service)"
