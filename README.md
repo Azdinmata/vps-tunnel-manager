@@ -66,7 +66,7 @@ Access the dashboard at `http://localhost:3000`.
 ### 2. Deploy on Linux VPS (Ubuntu / Debian)
 Run the one-line installer command in root shell:
 ```bash
-curl -sSL https://raw.githubusercontent.com/azzeddin/vps-tunnel-manager/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Azdinmata/vps-tunnel-manager/main/scripts/install.sh | bash
 ```
 
 ### 3. Terminal CLI Menu Command
