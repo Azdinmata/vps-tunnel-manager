@@ -109,9 +109,10 @@ EOF
 systemctl daemon-reload
 systemctl enable --now vps-web-dashboard
 
-# Install CLI Manager command ('manager')
-cp /usr/local/vps-manager/scripts/manager.sh /usr/local/bin/manager
-chmod +x /usr/local/bin/manager
+# Install CLI Menu command ('menu' and 'manager' compatibility link)
+cp /usr/local/vps-manager/scripts/menu.sh /usr/local/bin/menu
+chmod +x /usr/local/bin/menu
+ln -sf /usr/local/bin/menu /usr/local/bin/manager
 
 # Configure UFW Firewall (Allow Web Port 3000, SSH 22, SSL 443, WS 80, UDP 7300)
 ufw allow 3000/tcp 2>/dev/null
@@ -124,11 +125,11 @@ SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}')
 
 clear
 echo -e "${GREEN}=================================================================${NC}"
-echo -e "${GREEN}   ULTRA VPS TUNNEL MANAGER INSTALLED & LAUNCHED!               ${NC}"
+echo -e "${GREEN}   ULTRA VPS TUNNEL MENU INSTALLED & LAUNCHED!                  ${NC}"
 echo -e "${GREEN}=================================================================${NC}"
 echo -e "${CYAN}Processor Architecture:${NC} $ARCH_TYPE"
 echo -e "${CYAN}🌐 Web Dashboard Live URL (Accessible on ANY Device):${NC}"
 echo -e "   ${YELLOW}http://${SERVER_IP}:3000${NC}"
 echo -e "\n${CYAN}💻 Terminal CLI Menu Command:${NC}"
-echo -e "   Type '${GREEN}manager${CYAN}' in root shell anytime."
+echo -e "   Type '${GREEN}menu${CYAN}' (or 'manager') in root shell anytime."
 echo -e "${GREEN}=================================================================${NC}"

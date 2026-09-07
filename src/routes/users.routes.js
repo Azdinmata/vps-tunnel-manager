@@ -51,4 +51,15 @@ router.post('/:id/extend', (req, res) => {
   }
 });
 
+// Update Bandwidth Limit (0 = Unlimited)
+router.post('/:id/bandwidth', (req, res) => {
+  try {
+    const user = UserService.updateBandwidth(req.params.id, req.body.maxBandwidthGB);
+    req.app.get('io').emit('users_list', UserService.getAllUsers());
+    res.json({ success: true, user });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 module.exports = router;

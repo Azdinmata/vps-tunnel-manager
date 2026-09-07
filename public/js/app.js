@@ -146,15 +146,18 @@ function renderUsersTable(users) {
       ? `<span class="badge-lifetime"><i class="fa-solid fa-infinity"></i> LIFETIME</span>` 
       : (user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : 'N/A');
 
+    const isUnlimitedBw = !user.maxBandwidthGB || user.maxBandwidthGB === 0;
+    const bwDisplay = isUnlimitedBw
+      ? `<span class="badge-lifetime"><i class="fa-solid fa-database"></i> UNLIMITED</span>`
+      : `<span class="tag"><i class="fa-solid fa-database"></i> ${user.maxBandwidthGB} GB</span>`;
+
     tr.innerHTML = `
       <td><strong>${escapeHtml(user.username)}</strong></td>
       <td><code>${escapeHtml(user.password)}</code></td>
       <td><span class="uuid-text">${escapeHtml(user.uuid.slice(0, 18))}...</span></td>
       <td><span class="tag"><i class="fa-solid fa-mobile-screen"></i> ${user.maxLogins} Devices</span></td>
       <td>${expDisplay}</td>
-      <td>
-        <span class="tag"><i class="fa-solid fa-check color-emerald"></i> ALL PROTOCOLS</span>
-      </td>
+      <td>${bwDisplay}</td>
       <td>
         <span class="status-pill ${user.status === 'active' ? 'online' : 'offline'}">
           <i class="fa-solid fa-${user.status === 'active' ? 'check-circle' : 'lock'}"></i> ${user.status}
@@ -164,6 +167,7 @@ function renderUsersTable(users) {
         <div style="display: flex; gap: 4px;">
           <button class="btn btn-xs btn-outline" title="Toggle Lock" onclick="toggleUserStatus('${user.id}')"><i class="fa-solid fa-${user.status === 'active' ? 'lock' : 'lock-open'}"></i></button>
           <button class="btn btn-xs btn-outline" title="Extend Validity" onclick="extendUserValidityPrompt('${user.id}')"><i class="fa-solid fa-calendar-plus"></i></button>
+          <button class="btn btn-xs btn-outline color-amber" title="Edit Bandwidth Quota (0=Unlimited)" onclick="editUserBandwidthPrompt('${user.id}')"><i class="fa-solid fa-gauge-high"></i></button>
           <button class="btn btn-xs btn-gradient" title="Account Info & Protocol Connection Guide" onclick="openAccountGuideModal('${user.id}')"><i class="fa-solid fa-circle-info"></i> Guide</button>
           <button class="btn btn-xs btn-secondary" title="Get V2Ray / OpenVPN Config" onclick="openV2RayModalForUser('${user.id}')"><i class="fa-solid fa-qrcode"></i></button>
           <button class="btn btn-xs btn-glass" style="color: var(--rose);" title="Delete" onclick="deleteUser('${user.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -191,6 +195,7 @@ async function createNewUser() {
   const password = document.getElementById('new-password').value.trim();
   const maxLogins = document.getElementById('new-max-logins').value;
   const durationDays = document.getElementById('new-duration').value;
+  const maxBandwidthGB = document.getElementById('new-bandwidth') ? document.getElementById('new-bandwidth').value : 0;
 
   if (!username || !password) {
     alert('Please provide both username and password!');
@@ -201,7 +206,7 @@ async function createNewUser() {
     const res = await fetch('/api/users/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, maxLogins, durationDays })
+      body: JSON.stringify({ username, password, maxLogins, durationDays, maxBandwidthGB })
     });
     const data = await res.json();
 
@@ -211,6 +216,7 @@ async function createNewUser() {
       closeModal('modal-create-user');
       document.getElementById('new-username').value = '';
       document.getElementById('new-password').value = '';
+      if (document.getElementById('new-bandwidth')) document.getElementById('new-bandwidth').value = '0';
       
       const newUser = data.user || {
         id: data.id || username,
@@ -218,6 +224,7 @@ async function createNewUser() {
         password: password,
         uuid: data.uuid || 'e4a781b2-93c4-4b52-a1e9-8f7d6c5b4a3e',
         durationDays: parseInt(durationDays, 10),
+        maxBandwidthGB: parseInt(maxBandwidthGB, 10) || 0,
         isLifetime: parseInt(durationDays, 10) === 0
       };
 
@@ -226,6 +233,24 @@ async function createNewUser() {
     }
   } catch (e) {
     console.error('Account creation error:', e);
+  }
+}
+
+async function editUserBandwidthPrompt(id) {
+  const newLimit = prompt('Enter Max Bandwidth Limit in GB (Type 0 for UNLIMITED BANDWIDTH):', '50');
+  if (newLimit === null) return;
+
+  try {
+    const res = await fetch(`/api/users/${id}/bandwidth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maxBandwidthGB: newLimit })
+    });
+    const data = await res.json();
+    if (data.error) alert(`Error: ${data.error}`);
+    else alert('Bandwidth quota updated successfully!');
+  } catch (e) {
+    console.error('Bandwidth update error:', e);
   }
 }function switchTab(tabId) {
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
@@ -720,6 +745,13 @@ function openAccountGuideModal(userIdOrUser) {
   if (expBadge) {
     expBadge.innerText = isLifetime ? 'LIFETIME' : (user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : 'ACTIVE');
     expBadge.className = isLifetime ? 'badge-lifetime' : 'badge-active';
+  }
+
+  const isUnlimitedBw = !user.maxBandwidthGB || user.maxBandwidthGB === 0;
+  const bwBadge = document.getElementById('guide-bw-badge');
+  if (bwBadge) {
+    bwBadge.innerText = isUnlimitedBw ? 'UNLIMITED' : `${user.maxBandwidthGB} GB`;
+    bwBadge.className = isUnlimitedBw ? 'badge-lifetime' : 'badge-active';
   }
 
   document.querySelectorAll('.guide-host-val').forEach(el => el.innerText = host);
