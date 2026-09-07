@@ -59,11 +59,12 @@ cat << 'EOF' > /etc/issue.net
 <p style="text-align:center;"><b><font color="#00F0FF">ULTRA VPS MULTI-PROTOCOL SERVER</font></b><br><font color="#A855F7">Universal Account Active | No Torrenting / Spamming Allowed</font></p>
 EOF
 
-sed -i 's/#Banner none/Banner \/etc\/issue.net/g' /etc/ssh/sshd_config
-systemctl restart sshd || systemctl restart ssh
+sed -i 's/#Banner none/Banner \/etc\/issue.net/g' /etc/ssh/sshd_config 2>/dev/null || true
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 
 # Stunnel4 Setup
 echo -e "\n${YELLOW}[4/8] Configuring SSL Stunnel4...${NC}"
+mkdir -p /etc/stunnel /var/log/stunnel
 openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
   -subj "/C=US/ST=State/L=City/O=UltraVPS/CN=vpn.server" \
   -keyout /etc/stunnel/stunnel.pem -out /etc/stunnel/stunnel.pem 2>/dev/null
@@ -78,8 +79,13 @@ accept = 443
 connect = 127.0.0.1:22
 EOF
 
-sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-systemctl restart stunnel4
+if [ -f /etc/default/stunnel4 ]; then
+  sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4 2>/dev/null || true
+fi
+
+systemctl enable stunnel4 2>/dev/null || systemctl enable stunnel 2>/dev/null || true
+systemctl restart stunnel4 2>/dev/null || systemctl restart stunnel 2>/dev/null || service stunnel4 restart 2>/dev/null || true
+
 
 # Deploy Web Dashboard Project to /usr/local/vps-manager & Run npm install automatically
 echo -e "\n${YELLOW}[5/8] Deploying Web Dashboard & Automatically Installing Dependencies...${NC}"
